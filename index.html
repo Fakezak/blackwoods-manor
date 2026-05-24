@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Darkwood Chronicles - Text Adventure</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Main Menu Screen -->
+    <div id="main-menu" class="screen active">
+        <div class="menu-container">
+            <div class="menu-background">
+                <div class="menu-overlay"></div>
+                <h1 class="game-title">Darkwood Chronicles</h1>
+                <p class="game-subtitle">A Text Adventure Game</p>
+                
+                <div class="menu-buttons">
+                    <button id="play-btn" class="menu-btn">Play</button>
+                    <button id="continue-btn" class="menu-btn">Continue</button>
+                    <button id="settings-btn" class="menu-btn">Settings</button>
+                </div>
+                
+                <div class="version-text">v1.0.0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Screen -->
+    <div id="settings-screen" class="screen">
+        <div class="settings-container">
+            <h2>Settings</h2>
+            
+            <div class="setting-item">
+                <label>Music Volume</label>
+                <input type="range" id="music-volume" min="0" max="100" value="50">
+                <span id="music-value">50%</span>
+            </div>
+            
+            <div class="setting-item">
+                <label>Sound Effects</label>
+                <input type="range" id="sfx-volume" min="0" max="100" value="70">
+                <span id="sfx-value">70%</span>
+            </div>
+            
+            <div class="setting-item">
+                <label>Text Speed</label>
+                <select id="text-speed">
+                    <option value="slow">Slow</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="fast">Fast</option>
+                </select>
+            </div>
+            
+            <div class="setting-item">
+                <label>Dark Mode</label>
+                <label class="switch">
+                    <input type="checkbox" id="dark-mode" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="setting-item">
+                <label>Delete Save Data</label>
+                <button id="delete-save" class="danger-btn">Delete</button>
+            </div>
+            
+            <button id="back-to-menu" class="menu-btn">Back to Menu</button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen">
+        <div class="game-container">
+            <div class="game-header">
+                <div class="player-stats">
+                    <span>🏰 Location: <span id="location-name">Darkwood Forest</span></span>
+                    <span>❤️ Health: <span id="health">100</span></span>
+                    <span>⭐ Level: <span id="level">1</span></span>
+                </div>
+                <button id="save-game-btn" class="small-btn">Save Game</button>
+            </div>
+            
+            <div id="game-text" class="game-text">
+                Welcome to Darkwood Chronicles...
+            </div>
+            
+            <div id="game-choices" class="game-choices">
+                <!-- Dynamic choices will appear here -->
+            </div>
+            
+            <div class="game-input-area" style="display: none;">
+                <input type="text" id="player-input" placeholder="Type your action...">
+                <button id="submit-input">Submit</button>
+            </div>
+            
+            <button id="return-to-menu" class="small-btn">Return to Menu</button>
+        </div>
+        
+        <div class="inventory-panel">
+            <h3>Inventory</h3>
+            <ul id="inventory-list">
+                <li>Empty</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
