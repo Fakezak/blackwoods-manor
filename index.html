@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Darkwood Chronicles - Text Adventure</title>
+    <title>Darkwood Chronicles - 3D Horror</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -13,31 +14,35 @@
 
         body {
             font-family: 'Courier New', monospace;
-            background: #1a1a1a;
+            background: #0a0a0a;
             color: #e0e0e0;
             height: 100vh;
             overflow: hidden;
+            user-select: none;
         }
 
         .screen {
             display: none;
             height: 100vh;
             width: 100vw;
+            position: absolute;
+            top: 0;
+            left: 0;
         }
 
         .screen.active {
             display: flex;
         }
 
-        /* Main Menu Styles */
+        /* Main Menu */
         .menu-container {
             width: 100%;
             height: 100%;
-            background-image: url('https://images.unsplash.com/photo-1509803874385-db7c23652552?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-image: url('https://kommodo.ai/i/ouFPT0Zb7uzB4fTeS9dT');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            background-color: #0a0a0a;
+            background-color: #050505;
             position: relative;
             display: flex;
             align-items: center;
@@ -50,7 +55,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.75);
             z-index: 1;
         }
 
@@ -58,25 +63,42 @@
             position: relative;
             z-index: 2;
             text-align: center;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             padding: 60px 80px;
             border-radius: 15px;
             border: 2px solid #4a4a4a;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 40px rgba(139, 0, 0, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5);
+            animation: pulse-border 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { border-color: #4a4a4a; box-shadow: 0 0 40px rgba(139, 0, 0, 0.3); }
+            50% { border-color: #8b0000; box-shadow: 0 0 60px rgba(139, 0, 0, 0.6); }
         }
 
         .game-title {
             font-size: 4em;
             color: #c9a959;
-            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+            text-shadow: 0 0 20px rgba(139, 0, 0, 0.8), 3px 3px 6px rgba(0, 0, 0, 0.9);
             margin-bottom: 10px;
-            letter-spacing: 3px;
+            letter-spacing: 4px;
+            animation: flicker 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            41% { opacity: 1; }
+            42% { opacity: 0.8; }
+            43% { opacity: 1; }
+            45% { opacity: 0.3; }
+            46% { opacity: 1; }
         }
 
         .game-subtitle {
             font-size: 1.2em;
             color: #8a8a8a;
             margin-bottom: 50px;
+            text-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
         }
 
         .menu-buttons {
@@ -87,48 +109,52 @@
         }
 
         .menu-btn {
-            width: 250px;
+            width: 280px;
             padding: 15px 30px;
             font-size: 1.2em;
-            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+            background: linear-gradient(135deg, #1a0a0a, #2a0a0a);
             color: #c9a959;
-            border: 2px solid #c9a959;
+            border: 2px solid #8b0000;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
             font-family: 'Courier New', monospace;
             font-weight: bold;
             letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(139, 0, 0, 0.5);
         }
 
         .menu-btn:hover {
-            background: linear-gradient(135deg, #c9a959, #8a7a3a);
-            color: #1a1a1a;
+            background: linear-gradient(135deg, #8b0000, #4a0000);
+            color: #fff;
             transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(201, 169, 89, 0.5);
+            box-shadow: 0 0 30px rgba(139, 0, 0, 0.7);
+            border-color: #ff0000;
         }
 
         .menu-btn:disabled {
-            opacity: 0.5;
+            opacity: 0.3;
             cursor: not-allowed;
             pointer-events: none;
+            border-color: #333;
         }
 
         .version-text {
             margin-top: 40px;
-            color: #666;
+            color: #444;
             font-size: 0.9em;
         }
 
-        /* Settings Styles */
+        /* Settings */
         .settings-container {
             width: 100%;
             max-width: 600px;
             margin: auto;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(5, 5, 5, 0.95);
             padding: 40px;
             border-radius: 15px;
             border: 2px solid #4a4a4a;
+            box-shadow: 0 0 30px rgba(139, 0, 0, 0.2);
         }
 
         .settings-container h2 {
@@ -136,6 +162,7 @@
             text-align: center;
             font-size: 2em;
             margin-bottom: 40px;
+            text-shadow: 0 0 15px rgba(139, 0, 0, 0.5);
         }
 
         .setting-item {
@@ -154,11 +181,12 @@
 
         .setting-item input[type="range"] {
             width: 200px;
+            accent-color: #8b0000;
         }
 
         .setting-item select {
             padding: 8px 15px;
-            background: #2a2a2a;
+            background: #1a0a0a;
             color: #e0e0e0;
             border: 1px solid #4a4a4a;
             border-radius: 5px;
@@ -171,7 +199,6 @@
             text-align: center;
         }
 
-        /* Toggle Switch */
         .switch {
             position: relative;
             display: inline-block;
@@ -192,7 +219,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #2a2a2a;
+            background-color: #2a0a0a;
             transition: .4s;
             border-radius: 34px;
             border: 1px solid #4a4a4a;
@@ -205,22 +232,23 @@
             width: 26px;
             left: 4px;
             bottom: 4px;
-            background-color: #c9a959;
+            background-color: #8b0000;
             transition: .4s;
             border-radius: 50%;
         }
 
         input:checked + .slider {
-            background-color: #3a3a3a;
+            background-color: #3a0a0a;
         }
 
         input:checked + .slider:before {
             transform: translateX(26px);
+            background-color: #ff0000;
         }
 
         .danger-btn {
             padding: 8px 20px;
-            background: #5a1a1a;
+            background: #3a0a0a;
             color: #ff6b6b;
             border: 1px solid #ff6b6b;
             border-radius: 5px;
@@ -232,111 +260,203 @@
         .danger-btn:hover {
             background: #ff6b6b;
             color: #1a1a1a;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
         }
 
-        /* Game Screen Styles */
+        /* Game Screen */
         #game-screen {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            padding: 20px;
-            gap: 20px;
+            background: #000;
+            padding: 0;
+            gap: 0;
+            flex-direction: column;
         }
 
-        .game-container {
-            flex: 1;
-            background: rgba(0, 0, 0, 0.8);
-            border-radius: 10px;
-            padding: 30px;
-            border: 2px solid #2a2a4a;
+        #game-canvas-container {
+            position: relative;
+            width: 100%;
+            height: 65%;
+            background: #000;
+            overflow: hidden;
+        }
+
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .vignette-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.8) 100%);
+            z-index: 10;
+        }
+
+        .noise-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            z-index: 11;
+        }
+
+        .flashlight-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), transparent 0%, transparent 80px, rgba(0,0,0,0.95) 200px);
+            z-index: 12;
+            transition: background 0.1s ease;
+        }
+
+        .game-ui-panel {
+            height: 35%;
+            background: linear-gradient(180deg, #0a0a0a 0%, #1a0a0a 100%);
+            border-top: 2px solid #8b0000;
             display: flex;
             flex-direction: column;
+            padding: 15px 20px;
+            gap: 10px;
+            box-shadow: 0 -10px 30px rgba(139, 0, 0, 0.2);
         }
 
         .game-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #2a2a4a;
-            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2a0a0a;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 10px;
         }
 
         .player-stats {
             display: flex;
-            gap: 30px;
+            gap: 25px;
             color: #c9a959;
-            font-size: 1.1em;
+            font-size: 1em;
             flex-wrap: wrap;
         }
 
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .health-bar {
+            width: 100px;
+            height: 12px;
+            background: #2a0a0a;
+            border: 1px solid #4a0a0a;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8b0000, #ff0000);
+            transition: width 0.5s ease;
+            width: 100%;
+        }
+
+        .sanity-bar {
+            width: 100px;
+            height: 12px;
+            background: #0a0a2a;
+            border: 1px solid #1a1a4a;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .sanity-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4a0080, #8000ff);
+            transition: width 0.5s ease;
+            width: 100%;
+        }
+
         .small-btn {
-            padding: 8px 20px;
-            background: #2a2a2a;
+            padding: 6px 16px;
+            background: #1a0a0a;
             color: #c9a959;
-            border: 1px solid #c9a959;
+            border: 1px solid #8b0000;
             border-radius: 5px;
             cursor: pointer;
             font-family: 'Courier New', monospace;
+            font-size: 0.9em;
             transition: all 0.3s ease;
         }
 
         .small-btn:hover {
-            background: #c9a959;
-            color: #1a1a1a;
+            background: #8b0000;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(139, 0, 0, 0.5);
         }
 
         .game-text {
             flex: 1;
             color: #d0d0d0;
-            font-size: 1.1em;
-            line-height: 1.8;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
+            font-size: 1em;
+            line-height: 1.6;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
             border-radius: 5px;
-            margin-bottom: 20px;
             overflow-y: auto;
             white-space: pre-wrap;
-            min-height: 200px;
-            max-height: 400px;
+            border: 1px solid #2a0a0a;
         }
 
         .game-choices {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 8px;
+            max-height: 120px;
+            overflow-y: auto;
         }
 
         .choice-btn {
-            padding: 12px 20px;
-            background: #2a2a4a;
+            padding: 10px 16px;
+            background: linear-gradient(90deg, #1a0a0a, #2a0a0a);
             color: #c9a959;
-            border: 1px solid #4a4a6a;
+            border: 1px solid #4a0a0a;
             border-radius: 5px;
             cursor: pointer;
             font-family: 'Courier New', monospace;
             text-align: left;
             transition: all 0.3s ease;
+            font-size: 0.95em;
         }
 
         .choice-btn:hover {
-            background: #3a3a6a;
-            border-color: #c9a959;
-            transform: translateX(5px);
+            background: linear-gradient(90deg, #3a0a0a, #4a0a0a);
+            border-color: #8b0000;
+            transform: translateX(8px);
+            box-shadow: 0 0 15px rgba(139, 0, 0, 0.3);
+            color: #fff;
         }
 
         .game-input-area {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
         }
 
         #player-input {
             flex: 1;
-            padding: 12px;
-            background: #1a1a2e;
-            border: 1px solid #4a4a6a;
+            padding: 10px;
+            background: #0a0a0a;
+            border: 1px solid #4a0a0a;
             color: #e0e0e0;
             border-radius: 5px;
             font-family: 'Courier New', monospace;
@@ -345,14 +465,15 @@
 
         #player-input:focus {
             outline: none;
-            border-color: #c9a959;
+            border-color: #8b0000;
+            box-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
         }
 
         #submit-input {
-            padding: 12px 20px;
-            background: #2a2a4a;
+            padding: 10px 20px;
+            background: #2a0a0a;
             color: #c9a959;
-            border: 1px solid #c9a959;
+            border: 1px solid #8b0000;
             border-radius: 5px;
             cursor: pointer;
             font-family: 'Courier New', monospace;
@@ -360,38 +481,44 @@
         }
 
         #submit-input:hover {
-            background: #c9a959;
-            color: #1a1a1a;
+            background: #8b0000;
+            color: #fff;
         }
 
         .inventory-panel {
-            width: 250px;
-            background: rgba(0, 0, 0, 0.8);
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            width: 200px;
+            background: rgba(5, 5, 5, 0.9);
             border-radius: 10px;
-            padding: 20px;
-            border: 2px solid #2a2a4a;
+            padding: 15px;
+            border: 1px solid #8b0000;
+            z-index: 20;
+            backdrop-filter: blur(5px);
         }
 
         .inventory-panel h3 {
             color: #c9a959;
             text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.3em;
-            border-bottom: 1px solid #2a2a4a;
-            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            border-bottom: 1px solid #2a0a0a;
+            padding-bottom: 8px;
         }
 
         #inventory-list {
             list-style: none;
             color: #d0d0d0;
+            font-size: 0.85em;
         }
 
         #inventory-list li {
-            padding: 8px;
-            margin-bottom: 5px;
-            background: rgba(42, 42, 74, 0.5);
+            padding: 6px;
+            margin-bottom: 4px;
+            background: rgba(42, 10, 10, 0.5);
             border-radius: 3px;
-            font-size: 0.9em;
+            border-left: 2px solid #8b0000;
         }
 
         /* Notification */
@@ -399,34 +526,70 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #2a2a2a;
+            background: rgba(10, 0, 0, 0.95);
             color: #c9a959;
             padding: 15px 25px;
-            border: 1px solid #c9a959;
+            border: 1px solid #8b0000;
             border-radius: 5px;
             z-index: 1000;
             animation: slideIn 0.3s ease;
+            box-shadow: 0 0 20px rgba(139, 0, 0, 0.5);
         }
 
-        /* Scrollbar Styles */
+        /* Horror Effects */
+        .blood-splatter {
+            position: fixed;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .blood-splatter.active {
+            opacity: 0.7;
+        }
+
+        .screen-shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .heartbeat {
+            animation: heartbeat 2s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            10% { transform: scale(1.05); }
+            20% { transform: scale(1); }
+            30% { transform: scale(1.05); }
+            40% { transform: scale(1); }
+        }
+
+        /* Scrollbar */
         ::-webkit-scrollbar {
-            width: 10px;
+            width: 8px;
         }
 
         ::-webkit-scrollbar-track {
-            background: #1a1a1a;
+            background: #0a0a0a;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #4a4a4a;
-            border-radius: 5px;
+            background: #4a0a0a;
+            border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #c9a959;
+            background: #8b0000;
         }
 
-        /* Animations */
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
@@ -437,60 +600,27 @@
             to { transform: translateX(100%); opacity: 0; }
         }
 
-        /* Responsive Design */
+        /* Responsive */
         @media (max-width: 768px) {
             .menu-background {
                 padding: 40px 30px;
                 margin: 20px;
             }
-            
-            .game-title {
-                font-size: 2.5em;
-            }
-            
-            .menu-btn {
-                width: 200px;
-                padding: 12px 25px;
-                font-size: 1em;
-            }
-            
-            #game-screen {
-                flex-direction: column;
-            }
-            
-            .inventory-panel {
-                width: 100%;
-            }
-            
-            .player-stats {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .settings-container {
-                margin: 20px;
-                padding: 20px;
-            }
-
-            .game-container {
-                padding: 15px;
-            }
+            .game-title { font-size: 2.5em; }
+            .menu-btn { width: 220px; padding: 12px 25px; font-size: 1em; }
+            .inventory-panel { width: 150px; right: 10px; top: 10px; }
+            .player-stats { font-size: 0.85em; gap: 15px; }
+            .health-bar, .sanity-bar { width: 70px; }
         }
 
         @media (max-width: 480px) {
-            .game-title {
-                font-size: 2em;
-            }
-
-            .game-subtitle {
-                font-size: 1em;
-            }
-
-            .menu-background {
-                padding: 30px 20px;
-            }
+            .game-title { font-size: 2em; }
+            .game-subtitle { font-size: 1em; }
+            .menu-background { padding: 30px 20px; }
+            .inventory-panel { display: none; }
         }
     </style>
+<base target="_blank">
 </head>
 <body>
     <!-- Main Menu Screen -->
@@ -499,15 +629,15 @@
             <div class="menu-overlay"></div>
             <div class="menu-background">
                 <h1 class="game-title">Darkwood Chronicles</h1>
-                <p class="game-subtitle">A Text Adventure Game</p>
-                
+                <p class="game-subtitle">A 3D Horror Experience</p>
+
                 <div class="menu-buttons">
-                    <button id="play-btn" class="menu-btn">Play</button>
-                    <button id="continue-btn" class="menu-btn">Continue</button>
+                    <button id="play-btn" class="menu-btn">Enter the Darkness</button>
+                    <button id="continue-btn" class="menu-btn">Continue Nightmare</button>
                     <button id="settings-btn" class="menu-btn">Settings</button>
                 </div>
-                
-                <div class="version-text">v1.0.0</div>
+
+                <div class="version-text">v2.0.0 - Horror Edition</div>
             </div>
         </div>
     </div>
@@ -516,19 +646,19 @@
     <div id="settings-screen" class="screen">
         <div class="settings-container">
             <h2>⚙️ Settings</h2>
-            
+
             <div class="setting-item">
                 <label>🎵 Music Volume</label>
                 <input type="range" id="music-volume" min="0" max="100" value="50">
                 <span class="value-display" id="music-value">50%</span>
             </div>
-            
+
             <div class="setting-item">
                 <label>🔊 Sound Effects</label>
                 <input type="range" id="sfx-volume" min="0" max="100" value="70">
                 <span class="value-display" id="sfx-value">70%</span>
             </div>
-            
+
             <div class="setting-item">
                 <label>📝 Text Speed</label>
                 <select id="text-speed">
@@ -537,62 +667,432 @@
                     <option value="fast">Fast</option>
                 </select>
             </div>
-            
+
             <div class="setting-item">
-                <label>🌙 Dark Mode</label>
+                <label>🔦 Flashlight Mode</label>
                 <label class="switch">
-                    <input type="checkbox" id="dark-mode" checked>
+                    <input type="checkbox" id="flashlight-mode" checked>
                     <span class="slider"></span>
                 </label>
             </div>
-            
+
             <div class="setting-item">
                 <label>🗑️ Delete Save Data</label>
                 <button id="delete-save" class="danger-btn">Delete</button>
             </div>
-            
+
             <button id="back-to-menu" class="menu-btn" style="width: 100%; margin-top: 20px;">Back to Menu</button>
         </div>
     </div>
 
     <!-- Game Screen -->
     <div id="game-screen" class="screen">
-        <div class="game-container">
+        <div id="game-canvas-container">
+            <canvas id="game-canvas"></canvas>
+            <div class="vignette-overlay"></div>
+            <div class="noise-overlay"></div>
+            <div class="flashlight-overlay" id="flashlight"></div>
+
+            <div class="inventory-panel">
+                <h3>🎒 Inventory</h3>
+                <ul id="inventory-list">
+                    <li>Empty</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="game-ui-panel">
             <div class="game-header">
                 <div class="player-stats">
-                    <span>🏰 <span id="location-name">Darkwood Forest</span></span>
-                    <span>❤️ <span id="health">100</span></span>
-                    <span>⭐ Level: <span id="level">1</span></span>
+                    <span class="stat-item">🏰 <span id="location-name">Darkwood Forest</span></span>
+                    <span class="stat-item">❤️ 
+                        <div class="health-bar"><div class="health-fill" id="health-bar"></div></div>
+                        <span id="health">100</span>
+                    </span>
+                    <span class="stat-item">🧠 
+                        <div class="sanity-bar"><div class="sanity-fill" id="sanity-bar"></div></div>
+                        <span id="sanity">100</span>
+                    </span>
+                    <span class="stat-item">⭐ Level: <span id="level">1</span></span>
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button id="save-game-btn" class="small-btn">💾 Save</button>
                     <button id="return-to-menu" class="small-btn">🏠 Menu</button>
                 </div>
             </div>
-            
+
             <div id="game-text" class="game-text">
                 Welcome to Darkwood Chronicles...
             </div>
-            
-            <div id="game-choices" class="game-choices">
-                <!-- Dynamic choices will appear here -->
-            </div>
-            
+
+            <div id="game-choices" class="game-choices"></div>
+
             <div class="game-input-area">
                 <input type="text" id="player-input" placeholder="Type your action... (try 'help')">
                 <button id="submit-input">Submit</button>
             </div>
         </div>
-        
-        <div class="inventory-panel">
-            <h3>🎒 Inventory</h3>
-            <ul id="inventory-list">
-                <li>Empty</li>
-            </ul>
-        </div>
     </div>
 
     <script>
+
+        // ============ 3D HORROR ENGINE ============
+        class Horror3DEngine {
+            constructor() {
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.clock = new THREE.Clock();
+                this.objects = [];
+                this.particles = null;
+                this.ghostObjects = [];
+                this.isRunning = false;
+                this.mouseX = 0;
+                this.mouseY = 0;
+                this.canvas = document.getElementById('game-canvas');
+                this.container = document.getElementById('game-canvas-container');
+            }
+
+            init() {
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x050505);
+                this.scene.fog = new THREE.FogExp2(0x0a0a0a, 0.035);
+
+                this.camera = new THREE.PerspectiveCamera(75, this.container.clientWidth / this.container.clientHeight, 0.1, 1000);
+                this.camera.position.set(0, 1.6, 5);
+
+                this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
+                this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+                this.setupHorrorLighting();
+                this.createEnvironment();
+                this.createParticles();
+                this.createGhostlyFigures();
+
+                window.addEventListener('resize', () => this.onResize());
+                this.container.addEventListener('mousemove', (e) => this.onMouseMove(e));
+
+                this.isRunning = true;
+                this.animate();
+            }
+
+            setupHorrorLighting() {
+                const ambientLight = new THREE.AmbientLight(0x1a0505, 0.2);
+                this.scene.add(ambientLight);
+
+                const moonLight = new THREE.DirectionalLight(0x4444aa, 0.3);
+                moonLight.position.set(10, 20, 10);
+                moonLight.castShadow = true;
+                this.scene.add(moonLight);
+                this.lights = [moonLight];
+
+                this.campfireLight = new THREE.PointLight(0xff4400, 1, 20);
+                this.campfireLight.position.set(0, 1, 0);
+                this.campfireLight.castShadow = true;
+                this.scene.add(this.campfireLight);
+                this.lights.push(this.campfireLight);
+
+                this.ghostLight = new THREE.PointLight(0x6600ff, 0.5, 15);
+                this.ghostLight.position.set(-5, 2, -5);
+                this.scene.add(this.ghostLight);
+                this.lights.push(this.ghostLight);
+            }
+
+            createEnvironment() {
+                const groundGeometry = new THREE.PlaneGeometry(100, 100, 64, 64);
+                const groundMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x0a0a0a,
+                    roughness: 0.9,
+                    metalness: 0.1
+                });
+
+                const positions = groundGeometry.attributes.position;
+                for (let i = 0; i < positions.count; i++) {
+                    const x = positions.getX(i);
+                    const y = positions.getY(i);
+                    const z = Math.sin(x * 0.1) * Math.cos(y * 0.1) * 0.5 + Math.random() * 0.2;
+                    positions.setZ(i, z);
+                }
+                groundGeometry.computeVertexNormals();
+
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.receiveShadow = true;
+                this.scene.add(ground);
+
+                this.createTrees();
+                this.createDeadTrees();
+                this.createRocks();
+                this.createCabin();
+            }
+
+            createTrees() {
+                const treeCount = 40;
+                for (let i = 0; i < treeCount; i++) {
+                    const height = 4 + Math.random() * 6;
+                    const radius = 0.3 + Math.random() * 0.5;
+
+                    const trunkGeo = new THREE.CylinderGeometry(radius * 0.7, radius, height, 6);
+                    const trunkMat = new THREE.MeshStandardMaterial({
+                        color: 0x1a0a0a,
+                        roughness: 0.95,
+                        metalness: 0.0
+                    });
+                    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = 5 + Math.random() * 25;
+                    trunk.position.set(
+                        Math.cos(angle) * distance,
+                        height / 2,
+                        Math.sin(angle) * distance
+                    );
+                    trunk.castShadow = true;
+                    trunk.receiveShadow = true;
+                    trunk.rotation.z = (Math.random() - 0.5) * 0.1;
+                    trunk.rotation.x = (Math.random() - 0.5) * 0.1;
+
+                    this.scene.add(trunk);
+                    this.objects.push(trunk);
+                }
+            }
+
+            createDeadTrees() {
+                for (let i = 0; i < 8; i++) {
+                    const height = 3 + Math.random() * 4;
+                    const trunkGeo = new THREE.CylinderGeometry(0.1, 0.3, height, 4);
+                    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a });
+                    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = 6 + Math.random() * 15;
+                    trunk.position.set(
+                        Math.cos(angle) * distance,
+                        height / 2,
+                        Math.sin(angle) * distance
+                    );
+
+                    for (let j = 0; j < 3; j++) {
+                        const branchGeo = new THREE.CylinderGeometry(0.02, 0.05, 1 + Math.random(), 3);
+                        const branch = new THREE.Mesh(branchGeo, trunkMat);
+                        branch.position.set(0, height * 0.3 + j * 0.5, 0);
+                        branch.rotation.z = Math.random() * Math.PI;
+                        branch.rotation.x = Math.random() * Math.PI;
+                        trunk.add(branch);
+                    }
+
+                    this.scene.add(trunk);
+                }
+            }
+
+            createRocks() {
+                for (let i = 0; i < 15; i++) {
+                    const size = 0.3 + Math.random() * 0.8;
+                    const rockGeo = new THREE.DodecahedronGeometry(size, 0);
+                    const rockMat = new THREE.MeshStandardMaterial({
+                        color: 0x111111,
+                        roughness: 0.9
+                    });
+                    const rock = new THREE.Mesh(rockGeo, rockMat);
+
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = 3 + Math.random() * 20;
+                    rock.position.set(
+                        Math.cos(angle) * distance,
+                        size * 0.4,
+                        Math.sin(angle) * distance
+                    );
+                    rock.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+                    rock.castShadow = true;
+
+                    this.scene.add(rock);
+                }
+            }
+
+            createCabin() {
+                const cabinGroup = new THREE.Group();
+
+                const wallMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 0.9 });
+                const wallGeo = new THREE.BoxGeometry(4, 3, 4);
+                const walls = new THREE.Mesh(wallGeo, wallMat);
+                walls.position.y = 1.5;
+                walls.castShadow = true;
+                cabinGroup.add(walls);
+
+                const roofGeo = new THREE.ConeGeometry(3.5, 2, 4);
+                const roofMat = new THREE.MeshStandardMaterial({ color: 0x1a0a0a });
+                const roof = new THREE.Mesh(roofGeo, roofMat);
+                roof.position.y = 3.5;
+                roof.rotation.y = Math.PI / 4;
+                cabinGroup.add(roof);
+
+                const doorGeo = new THREE.BoxGeometry(1, 2, 0.1);
+                const doorMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a });
+                const door = new THREE.Mesh(doorGeo, doorMat);
+                door.position.set(0, 1, 2.05);
+                cabinGroup.add(door);
+
+                const windowGeo = new THREE.PlaneGeometry(0.8, 0.8);
+                const windowMat = new THREE.MeshBasicMaterial({ 
+                    color: 0xffaa00,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                const window1 = new THREE.Mesh(windowGeo, windowMat);
+                window1.position.set(1.5, 1.8, 2.01);
+                cabinGroup.add(window1);
+
+                cabinGroup.position.set(-8, 0, -10);
+                this.scene.add(cabinGroup);
+                this.cabin = cabinGroup;
+            }
+
+            createParticles() {
+                const particleCount = 200;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const velocities = [];
+
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 40;
+                    positions[i * 3 + 1] = Math.random() * 10;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 40;
+
+                    velocities.push({
+                        x: (Math.random() - 0.5) * 0.01,
+                        y: Math.random() * 0.01,
+                        z: (Math.random() - 0.5) * 0.01
+                    });
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+                const material = new THREE.PointsMaterial({
+                    color: 0x6644aa,
+                    size: 0.05,
+                    transparent: true,
+                    opacity: 0.6,
+                    blending: THREE.AdditiveBlending
+                });
+
+                this.particles = new THREE.Points(geometry, material);
+                this.particles.userData = { velocities };
+                this.scene.add(this.particles);
+            }
+
+            createGhostlyFigures() {
+                for (let i = 0; i < 3; i++) {
+                    const ghostGeo = new THREE.SphereGeometry(0.5, 8, 8);
+                    const ghostMat = new THREE.MeshBasicMaterial({
+                        color: 0x4400aa,
+                        transparent: true,
+                        opacity: 0.1
+                    });
+                    const ghost = new THREE.Mesh(ghostGeo, ghostMat);
+
+                    ghost.position.set(
+                        (Math.random() - 0.5) * 20,
+                        1 + Math.random(),
+                        (Math.random() - 0.5) * 20 - 10
+                    );
+
+                    ghost.userData = {
+                        originalY: ghost.position.y,
+                        speed: 0.5 + Math.random() * 0.5,
+                        offset: Math.random() * Math.PI * 2
+                    };
+
+                    this.scene.add(ghost);
+                    this.ghostObjects.push(ghost);
+                }
+            }
+
+            onMouseMove(e) {
+                const rect = this.container.getBoundingClientRect();
+                this.mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                this.mouseY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+                const flashlight = document.getElementById('flashlight');
+                if (flashlight && gameState.settings.flashlightMode) {
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    flashlight.style.setProperty('--mouse-x', x + '%');
+                    flashlight.style.setProperty('--mouse-y', y + '%');
+                }
+            }
+
+            onResize() {
+                if (!this.camera || !this.renderer) return;
+                this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+            }
+
+            updateParticles() {
+                if (!this.particles) return;
+                const positions = this.particles.geometry.attributes.position.array;
+                const velocities = this.particles.userData.velocities;
+
+                for (let i = 0; i < velocities.length; i++) {
+                    positions[i * 3] += velocities[i].x;
+                    positions[i * 3 + 1] += velocities[i].y;
+                    positions[i * 3 + 2] += velocities[i].z;
+
+                    if (positions[i * 3 + 1] > 10) {
+                        positions[i * 3 + 1] = 0;
+                    }
+                }
+
+                this.particles.geometry.attributes.position.needsUpdate = true;
+            }
+
+            updateGhosts(time) {
+                this.ghostObjects.forEach((ghost, i) => {
+                    ghost.position.y = ghost.userData.originalY + Math.sin(time * ghost.userData.speed + ghost.userData.offset) * 0.5;
+                    ghost.material.opacity = 0.05 + Math.sin(time * 2 + i) * 0.05;
+                    ghost.rotation.y += 0.005;
+                });
+            }
+
+            updateLights(time) {
+                this.campfireLight.intensity = 0.8 + Math.sin(time * 10) * 0.2 + Math.random() * 0.3;
+                this.campfireLight.color.setHSL(0.08 + Math.sin(time * 5) * 0.02, 1, 0.5);
+
+                this.ghostLight.intensity = 0.3 + Math.sin(time * 2) * 0.2;
+                this.ghostLight.position.x = -5 + Math.sin(time * 0.5) * 2;
+            }
+
+            updateCamera(time) {
+                this.camera.position.y = 1.6 + Math.sin(time * 0.5) * 0.05;
+                this.camera.rotation.y = this.mouseX * 0.1;
+                this.camera.rotation.x = this.mouseY * 0.05;
+            }
+
+            animate() {
+                if (!this.isRunning) return;
+                requestAnimationFrame(() => this.animate());
+
+                const time = this.clock.getElapsedTime();
+
+                this.updateParticles();
+                this.updateGhosts(time);
+                this.updateLights(time);
+                this.updateCamera(time);
+
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            dispose() {
+                this.isRunning = false;
+                if (this.renderer) {
+                    this.renderer.dispose();
+                }
+            }
+        }
+
         // ============ GAME STATE MANAGEMENT ============
         class GameState {
             constructor() {
@@ -600,6 +1100,7 @@
                 this.player = {
                     name: 'Adventurer',
                     health: 100,
+                    sanity: 100,
                     level: 1,
                     location: 'Darkwood Forest',
                     inventory: []
@@ -612,7 +1113,7 @@
                     musicVolume: 50,
                     sfxVolume: 70,
                     textSpeed: 'normal',
-                    darkMode: true
+                    flashlightMode: true
                 };
                 this.loadSettings();
             }
@@ -658,160 +1159,502 @@
             }
         }
 
-        // ============ GAME STORY DATA ============
+        // ============ HORROR STORY DATA ============
         const gameStory = {
             start: {
-                text: "You awaken in the Darkwood Forest, the ancient trees looming overhead like silent sentinels. The air is thick with mist, and you can hear the distant howl of wolves.\n\nA worn path leads north, while a faint light flickers to the east. You notice your leather satchel nearby.",
+                text: "You awaken in the Darkwood Forest, the ancient trees looming overhead like silent sentinels. The air is thick with mist, and you can hear the distant howl of wolves. Your flashlight flickers weakly, casting long shadows that seem to move on their own.\n\nA worn path leads north, while a faint light flickers to the east. You notice your leather satchel nearby, and something else... footprints in the mud that were not there before.",
                 choices: [
                     { text: "Follow the path north", next: 'northPath' },
                     { text: "Investigate the light to the east", next: 'eastLight' },
-                    { text: "Search your satchel", next: 'searchArea' }
+                    { text: "Search your satchel", next: 'searchArea' },
+                    { text: "Examine the footprints", next: 'examineFootprints' }
                 ]
             },
             northPath: {
-                text: "The path winds through the dark forest. After walking for what feels like hours, you come across an old, abandoned cabin. The door creaks open in the wind, revealing darkness within.",
+                text: "The path winds through the dark forest. The trees seem to lean in, their branches reaching toward you like skeletal fingers. After walking for what feels like hours, you come across an old, abandoned cabin. The door creaks open in the wind, revealing darkness within.\n\nYou feel a cold breath on your neck, but when you turn, nothing is there.",
                 choices: [
                     { text: "Enter the cabin", next: 'enterCabin' },
                     { text: "Continue past the cabin", next: 'continuePast' },
-                    { text: "Circle around to the back", next: 'cabinBack' }
-                ]
+                    { text: "Circle around to the back", next: 'cabinBack' },
+                    { text: "Shine flashlight at the trees", next: 'shineTrees' }
+                ],
+                horror: true
             },
             eastLight: {
-                text: "You push through the underbrush towards the flickering light. You discover a small campfire with a hooded figure sitting beside it. The figure turns towards you, revealing an old woman's weathered face.",
+                text: "You push through the underbrush towards the flickering light. You discover a small campfire with a hooded figure sitting beside it. The figure turns towards you, revealing an old woman's weathered face. Her eyes are completely white.\n\n'Come closer, child,' she whispers. 'I have been waiting for you.'",
                 choices: [
                     { text: "Approach the woman", next: 'approachWoman' },
                     { text: "Hide and observe", next: 'hideObserve' },
-                    { text: "Call out a greeting", next: 'greetWoman' }
-                ]
+                    { text: "Call out a greeting", next: 'greetWoman' },
+                    { text: "Run back to the path", next: 'northPath' }
+                ],
+                horror: true
             },
             searchArea: {
-                text: "You search your satchel and find it contains: a rusty dagger, a piece of parchment with strange markings, three gold coins, and a small healing potion.",
+                text: "You search your satchel and find: a rusty dagger, a piece of parchment with strange markings, three gold coins, and a small healing potion. As you close the satchel, you notice something scratched into the leather: 'DO NOT TRUST THE LIGHT.'",
                 choices: [
                     { text: "Take everything and head north", next: 'northPath' },
                     { text: "Take only the dagger and go east", next: 'eastLight' },
-                    { text: "Read the parchment first", next: 'readParchment' }
+                    { text: "Read the parchment first", next: 'readParchment' },
+                    { text: "Investigate the warning", next: 'investigateWarning' }
                 ]
             },
+            examineFootprints: {
+                text: "The footprints are large, barefoot, and pressed deep into the mud. They lead from the east, circle around where you were lying, and then head north. The spacing between steps is wrong, too far apart, as if whatever made them was not walking normally.\n\nYour sanity decreases as you realize they might not be human.",
+                choices: [
+                    { text: "Follow the footprints north", next: 'northPath' },
+                    { text: "Go east to find the source", next: 'eastLight' },
+                    { text: "Hide and wait", next: 'hideWait' }
+                ],
+                sanityDamage: 10
+            },
             enterCabin: {
-                text: "The cabin interior is dusty but surprisingly well-preserved. A journal lies open on a desk, and a locked chest sits in the corner. The floorboards creak beneath your feet.",
+                text: "The cabin interior is dusty but surprisingly well-preserved. A journal lies open on a desk, and a locked chest sits in the corner. The floorboards creak beneath your feet.\n\nFrom upstairs, you hear the sound of a child humming a nursery rhyme... but this cabin has been abandoned for years.",
                 choices: [
                     { text: "Read the journal", next: 'readJournal' },
                     { text: "Try to open the chest", next: 'openChest' },
+                    { text: "Investigate the humming", next: 'investigateHumming' },
                     { text: "Search for supplies", next: 'searchSupplies' }
-                ]
+                ],
+                horror: true
             },
             approachWoman: {
-                text: "The old woman smiles warmly as you approach. 'Ah, another lost soul,' she says, her voice like rustling leaves. 'Sit, child. I have tea and answers for those who seek them.'",
+                text: "The old woman smiles warmly as you approach, but her smile is too wide, showing too many teeth. 'Ah, another lost soul,' she says, her voice like rustling leaves. 'Sit, child. I have tea and answers for those who seek them.'\n\nThe fire behind her casts no shadow.",
                 choices: [
                     { text: "Accept her offer", next: 'acceptTea' },
                     { text: "Ask about the forest", next: 'askForest' },
-                    { text: "Politely decline and continue north", next: 'northPath' }
-                ]
+                    { text: "Politely decline and continue north", next: 'northPath' },
+                    { text: "Attack her with your dagger", next: 'attackWoman' }
+                ],
+                horror: true
             },
             readParchment: {
-                text: "The parchment contains a crude map of the forest with an 'X' marked near a cave to the north. Beneath the map, it reads: 'The Amulet of Shadows lies within. Beware the Guardian.'",
+                text: "The parchment contains a crude map of the forest with an 'X' marked near a cave to the north. Beneath the map, it reads: 'The Amulet of Shadows lies within. Beware the Guardian. It wears the face of the dead.'\n\nThe ink looks fresh. Dried blood fresh.",
                 choices: [
                     { text: "Follow the map north", next: 'northPath' },
                     { text: "Take everything and go east first", next: 'eastLight' }
                 ]
             },
             readJournal: {
-                text: "The journal belongs to a hunter named Marcus. The last entry reads: 'I've tracked the beast to its lair near the old oak. It guards something precious, but I'm too weak to continue. To whoever finds this - the chest key is hidden under the hearthstone.'",
+                text: "The journal belongs to a hunter named Marcus. The last entry reads: 'I have tracked the beast to its lair near the old oak. It guards something precious, but I am too weak to continue. To whoever finds this, the chest key is hidden under the hearthstone. DO NOT LOOK IN THE MIRROR.'\n\nYou glance at the wall. There is a broken mirror hanging there, and in its reflection... someone stands behind you.",
                 choices: [
                     { text: "Look under the hearthstone", next: 'findKey' },
-                    { text: "Leave the cabin", next: 'northPath' }
-                ]
+                    { text: "Smash the mirror", next: 'smashMirror' },
+                    { text: "Leave the cabin immediately", next: 'northPath' }
+                ],
+                horror: true,
+                sanityDamage: 15
             },
             findKey: {
-                text: "You lift the hearthstone and find a rusty iron key! This must open the chest in the corner.",
+                text: "You lift the hearthstone and find a rusty iron key! As you grasp it, the humming from upstairs stops abruptly. The silence is deafening.\n\nFootsteps. Slow, deliberate footsteps descending the stairs.",
                 choices: [
-                    { text: "Open the chest", next: 'openChestWithKey' },
-                    { text: "Keep the key and explore elsewhere", next: 'northPath' }
-                ]
+                    { text: "Open the chest quickly", next: 'openChestWithKey' },
+                    { text: "Hide behind the desk", next: 'hideBehindDesk' },
+                    { text: "Confront whatever is coming", next: 'confrontEntity' }
+                ],
+                horror: true
             },
             openChest: {
-                text: "The chest is locked tight. You'll need to find a key somewhere in the cabin.",
+                text: "The chest is locked tight. You will need to find a key somewhere in the cabin. As you try to force it, you hear a whisper directly in your ear: 'That is mine.'",
                 choices: [
                     { text: "Search the cabin more thoroughly", next: 'readJournal' },
                     { text: "Give up and leave", next: 'northPath' }
                 ]
             },
             openChestWithKey: {
-                text: "The key fits perfectly! Inside the chest, you find a silver amulet that glows faintly, a healing potion, and a note: 'The amulet will protect you from the shadows. Use it wisely.'",
+                text: "The key fits perfectly! Inside the chest, you find a silver amulet that glows faintly with an unholy light, a healing potion, and a note: 'The amulet will protect you from the shadows. But it also draws them near. Choose wisely.'\n\nThe footsteps stop at the bottom of the stairs. You hear breathing.",
                 choices: [
-                    { text: "Equip the amulet and head north", next: 'northPath' },
-                    { text: "Stay and rest in the cabin", next: 'restInCabin' }
-                ]
+                    { text: "Equip the amulet and escape", next: 'escapeCabin' },
+                    { text: "Leave the amulet, take the potion", next: 'leaveAmulet' }
+                ],
+                horror: true
             },
             hideObserve: {
-                text: "You hide behind a large tree and watch. The old woman seems to be brewing something in a small pot. After a while, she speaks: 'I know you're there, traveler. No need to hide.'",
+                text: "You hide behind a large tree and watch. The old woman seems to be brewing something in a small pot. After a while, she speaks without turning: 'I know you are there, traveler. No need to hide. I can smell your fear.'\n\nShe holds up a mirror, and in its reflection, you see yourself... but your reflection is smiling, and you are not.",
                 choices: [
                     { text: "Reveal yourself", next: 'approachWoman' },
-                    { text: "Flee back to the main path", next: 'northPath' }
-                ]
+                    { text: "Flee back to the main path", next: 'northPath' },
+                    { text: "Close your eyes and count to ten", next: 'countToTen' }
+                ],
+                horror: true,
+                sanityDamage: 10
             },
             greetWoman: {
-                text: "'Hello there!' you call out. The old woman looks up and smiles. 'Well met, traveler! Come, warm yourself by the fire. The forest is dangerous at night.'",
+                text: "'Hello there!' you call out. The old woman looks up and smiles. 'Well met, traveler! Come, warm yourself by the fire. The forest is dangerous at night.'\n\nAs you step closer, you notice the fire gives off no heat, and the logs are not burning, they are bleeding.",
                 choices: [
                     { text: "Join her at the fire", next: 'approachWoman' },
-                    { text: "Thank her but continue on", next: 'northPath' }
-                ]
+                    { text: "Thank her but continue on", next: 'northPath' },
+                    { text: "Point out the bleeding logs", next: 'pointOutLogs' }
+                ],
+                horror: true
             },
             acceptTea: {
-                text: "The tea is warm and surprisingly revitalizing. 'The forest holds many secrets,' the woman says. 'Seek the old oak tree to the north. There you'll find what you need.'\n\nYou feel refreshed! (+20 Health)",
+                text: "The tea is warm and surprisingly revitalizing, but it tastes like copper and ash. 'The forest holds many secrets,' the woman says. 'Seek the old oak tree to the north. There you will find what you need.'\n\nYou feel refreshed, but your reflection in the teacup shows you aging rapidly before returning to normal. (+20 Health, -10 Sanity)",
                 choices: [
                     { text: "Thank her and head north", next: 'northPath' },
                     { text: "Ask more questions", next: 'askForest' }
-                ]
+                ],
+                healthBonus: 20,
+                sanityDamage: 10
             },
             askForest: {
-                text: "'The Darkwood is ancient,' she explains. 'It was once a place of great magic. Now shadows lurk here. But there is still hope - the Amulet of Shadows can restore balance.'",
+                text: "'The Darkwood is ancient,' she explains, her eyes now completely black. 'It was once a place of great magic. Now shadows lurk here. But there is still hope, the Amulet of Shadows can restore balance. Or destroy everything. It depends on who wields it.'\n\nShe leans in close. 'Are you the one, child? Or are you just another meal?'",
                 choices: [
                     { text: "Ask where to find the amulet", next: 'acceptTea' },
-                    { text: "Thank her and leave", next: 'northPath' }
-                ]
+                    { text: "Thank her and leave", next: 'northPath' },
+                    { text: "Ask what she means by 'meal'", next: 'askMeal' }
+                ],
+                horror: true
             },
             searchSupplies: {
-                text: "You search the cabin and find some dried meat, a water flask, and bandages. These will be useful for your journey.",
+                text: "You search the cabin and find some dried meat, a water flask, and bandages. As you gather them, you notice the meat is moving. Not crawling, breathing. It is still alive somehow.",
                 choices: [
                     { text: "Take supplies and read the journal", next: 'readJournal' },
-                    { text: "Take supplies and leave", next: 'northPath' }
-                ]
+                    { text: "Take supplies and leave", next: 'northPath' },
+                    { text: "Leave the meat, take the rest", next: 'leaveMeat' }
+                ],
+                horror: true
             },
             restInCabin: {
-                text: "You decide to rest in the cabin. It's warm and safe. You recover some health and feel ready to continue your adventure.\n\n(+30 Health)",
+                text: "You decide to rest in the cabin. It is warm and safe, or so it seems. In your dreams, you see the forest from above, and in its center, something vast and ancient stirs beneath the roots. It knows you are here.\n\nYou wake up with scratches on your arms. (+30 Health, -15 Sanity)",
                 choices: [
                     { text: "Continue your journey north", next: 'northPath' },
                     { text: "Head east to investigate the light", next: 'eastLight' }
-                ]
+                ],
+                healthBonus: 30,
+                sanityDamage: 15
             },
             continuePast: {
-                text: "You continue past the cabin. The forest grows darker and more ominous. You can hear strange whispers among the trees. Perhaps you should have explored the cabin...",
+                text: "You continue past the cabin. The forest grows darker and more ominous. You can hear strange whispers among the trees, and they are saying your name. Perhaps you should have explored the cabin...\n\nThe path ahead is blocked by a fallen tree, but there is a narrow gap beneath it. You can see eyes glowing in the darkness beyond.",
                 choices: [
-                    { text: "Press on regardless", next: 'deepForest' },
-                    { text: "Turn back to the cabin", next: 'enterCabin' }
-                ]
+                    { text: "Crawl under the tree", next: 'deepForest' },
+                    { text: "Turn back to the cabin", next: 'enterCabin' },
+                    { text: "Climb over the tree", next: 'climbTree' }
+                ],
+                horror: true
             },
             cabinBack: {
-                text: "Behind the cabin, you find a small garden with medicinal herbs and a fresh water spring. You gather some herbs and drink from the spring.\n\n(+10 Health)",
+                text: "Behind the cabin, you find a small garden with medicinal herbs and a fresh water spring. But the herbs are growing in patterns, circles, spirals, symbols. And the spring water is red.\n\n(+10 Health)",
                 choices: [
                     { text: "Enter the cabin", next: 'enterCabin' },
-                    { text: "Continue your journey", next: 'northPath' }
-                ]
+                    { text: "Continue your journey", next: 'northPath' },
+                    { text: "Collect the herbs", next: 'collectHerbs' }
+                ],
+                healthBonus: 10
             },
             deepForest: {
-                text: "You venture deeper into the forest. The trees seem to close in around you. In the distance, you spot a massive old oak tree with something glinting in its branches...\n\nTo be continued...",
+                text: "You venture deeper into the forest. The trees seem to close in around you, their branches intertwining to form a canopy that blocks all light. In the distance, you spot a massive old oak tree with something glinting in its branches...\n\nBut between you and the oak, the shadows are moving. They are not just absence of light anymore. They are something else. Something hungry.",
                 choices: [
                     { text: "Approach the old oak", next: 'start' },
-                    { text: "Return to the main path", next: 'start' }
-                ]
+                    { text: "Return to the main path", next: 'start' },
+                    { text: "Use the amulet if you have it", next: 'useAmulet' }
+                ],
+                horror: true,
+                sanityDamage: 20
+            },
+            investigateHumming: {
+                text: "You climb the creaking stairs, each step groaning under your weight. The humming grows louder, more distorted. At the top, a child's room. A rocking chair moves on its own. In the corner, a doll sits facing the wall.\n\nThe doll turns its head 180 degrees to look at you. 'You are not Marcus,' it says in a deep, guttural voice.",
+                choices: [
+                    { text: "Apologize and back away", next: 'readJournal' },
+                    { text: "Ask where Marcus is", next: 'askMarcus' },
+                    { text: "Throw the doll out the window", next: 'throwDoll' }
+                ],
+                horror: true,
+                sanityDamage: 25
+            },
+            shineTrees: {
+                text: "You shine your flashlight at the trees. For a moment, you see them clearly, hundreds of faces embedded in the bark, mouths open in silent screams. Then the light flickers, and they are just trees again.\n\nBut now the faces are in your mind, and they will not stop screaming.",
+                choices: [
+                    { text: "Enter the cabin", next: 'enterCabin' },
+                    { text: "Run past the cabin", next: 'continuePast' },
+                    { text: "Turn off the flashlight", next: 'darkness' }
+                ],
+                horror: true,
+                sanityDamage: 15
+            },
+            darkness: {
+                text: "You turn off your flashlight. The darkness is absolute, suffocating. You can feel things brushing against your skin, whispering in languages you do not know but somehow understand. 'Stay,' they say. 'Stay with us. Forever.'\n\nYou feel hands pulling you down into the earth.",
+                choices: [
+                    { text: "Turn the flashlight back on!", next: 'shineTrees' },
+                    { text: "Let go and accept the darkness", next: 'badEnding' }
+                ],
+                horror: true,
+                sanityDamage: 30
+            },
+            badEnding: {
+                text: "The darkness consumes you. You become part of the forest, another face in the bark, another voice in the wind. The Darkwood has claimed you, as it has claimed so many before.\n\nSometimes, travelers hear your voice among the trees, whispering warnings that come too late.\n\n[THE END - BAD ENDING]",
+                choices: [
+                    { text: "Restart from checkpoint", next: 'start' },
+                    { text: "Return to main menu", next: 'menu' }
+                ],
+                gameOver: true
+            },
+            escapeCabin: {
+                text: "You clutch the amulet and burst out of the cabin. Behind you, something screams, a sound that should not come from any human throat. The amulet grows warm against your chest, and the shadows around you retreat.\n\nYou run north, not daring to look back. The forest seems to part before you, but you know it is only temporary. The thing in the cabin is still there. And it is angry.",
+                choices: [
+                    { text: "Keep running north", next: 'deepForest' },
+                    { text: "Find a place to hide", next: 'hideInForest' }
+                ],
+                horror: true
+            },
+            hideInForest: {
+                text: "You dive behind a fallen log, pressing yourself into the rotting wood. The amulet pulses with heat. Through gaps in the wood, you see it pass by, a shape of darkness and teeth, moving wrong, like a puppet with broken strings.\n\nIt stops. Turns. Sniffs the air.\n\nIt knows you are close.",
+                choices: [
+                    { text: "Hold your breath", next: 'holdBreath' },
+                    { text: "Run while its back is turned", next: 'deepForest' },
+                    { text: "Use the amulet's power", next: 'amuletPower' }
+                ],
+                horror: true,
+                sanityDamage: 10
+            },
+            holdBreath: {
+                text: "You hold your breath until your lungs burn. The creature circles the log once, twice, then moves on with a sound like breaking bones. You wait ten minutes before moving.\n\nWhen you finally stand, your legs are numb, but you are alive. For now.",
+                choices: [
+                    { text: "Continue north carefully", next: 'deepForest' }
+                ],
+                sanityDamage: 5
+            },
+            amuletPower: {
+                text: "You grip the amulet and focus. It flares with blinding purple light, and the creature shrieks, recoiling from the brightness. For a moment, you see its true form, something that was never human, never animal, something that existed before the forest.\n\nThe light fades. The creature is gone, but the amulet is now ice-cold. You feel like something has been watching you ever since.",
+                choices: [
+                    { text: "Continue north", next: 'deepForest' }
+                ],
+                sanityDamage: 20
+            },
+            askMeal: {
+                text: "The old woman's smile widens impossibly. 'I mean exactly what you think I mean, dear.' Her form flickers, and for a split second, you see something else beneath the skin, something with too many limbs and eyes that see in directions that do not exist.\n\n'But do not worry,' she says, her voice now layered with whispers. 'You are not ripe yet. Soon, though. Very soon.'",
+                choices: [
+                    { text: "Run away", next: 'northPath' },
+                    { text: "Throw the tea in her face", next: 'throwTea' },
+                    { text: "Ask what she wants from you", next: 'askWant' }
+                ],
+                horror: true,
+                sanityDamage: 15
+            },
+            throwTea: {
+                text: "You throw the tea in her face. She does not flinch. The liquid passes through her like she is made of smoke, and where it hits the ground, the grass turns black and dies instantly.\n\n'Now, now,' she tuts, her form solidifying again. 'That was not very polite.' The fire behind her erupts into purple flames. 'Run along, child. Before I change my mind about letting you go.'",
+                choices: [
+                    { text: "Run north", next: 'northPath' },
+                    { text: "Apologize profusely", next: 'apologize' }
+                ],
+                horror: true
+            },
+            pointOutLogs: {
+                text: "'Your logs are bleeding,' you say, pointing. The old woman looks at the fire, then back at you, her expression unreadable. 'Are they?' she asks softly. 'Or are your eyes bleeding, and you are only seeing what the forest wants you to see?'\n\nYou wipe your eyes. Your hand comes away red.",
+                choices: [
+                    { text: "Wipe your eyes and leave", next: 'northPath' },
+                    { text: "Ask what the forest wants", next: 'askForestWants' }
+                ],
+                horror: true,
+                sanityDamage: 10
+            },
+            countToTen: {
+                text: "You close your eyes and count. One... two... three... At seven, you feel something cold touch your face. Eight... nine... At ten, you open your eyes. The old woman is gone. The fire is out. The clearing is empty.\n\nBut written in the ashes are the words: 'I WILL SEE YOU AGAIN, CHILD.'",
+                choices: [
+                    { text: "Run north", next: 'northPath' },
+                    { text: "Erase the words", next: 'eraseWords' }
+                ],
+                horror: true,
+                sanityDamage: 10
+            },
+            smashMirror: {
+                text: "You grab a chair and smash the mirror. Glass shatters everywhere, but instead of falling, the shards hang in the air, each one showing a different reflection of you, some old, some young, some dead.\n\nThen they all speak at once: 'You should not have done that.' The shards fly toward you like shrapnel.",
+                choices: [
+                    { text: "Dodge!", next: 'dodgeShards' },
+                    { text: "Use your satchel as a shield", next: 'shieldShards' }
+                ],
+                horror: true,
+                healthDamage: 20
+            },
+            dodgeShards: {
+                text: "You dive to the side as glass shards embed themselves in the wall where you stood. One catches your arm, drawing blood. The mirror frame is empty now, but you can still feel eyes watching you from the broken glass on the floor.\n\n(-10 Health)",
+                choices: [
+                    { text: "Look under the hearthstone", next: 'findKey' },
+                    { text: "Leave the cabin", next: 'northPath' }
+                ],
+                healthDamage: 10
+            },
+            shieldShards: {
+                text: "You raise your satchel just in time. Shards embed themselves in the leather, some passing straight through. When you lower the satchel, the mirror is whole again, and your reflection is smiling at you with teeth that are not yours.\n\n(-5 Health, -15 Sanity)",
+                choices: [
+                    { text: "Smash it again", next: 'smashMirror' },
+                    { text: "Leave the cabin", next: 'northPath' }
+                ],
+                healthDamage: 5,
+                sanityDamage: 15
+            },
+            hideBehindDesk: {
+                text: "You scramble behind the desk, pressing yourself against the rotting wood. The footsteps reach the bottom of the stairs and stop. You hear breathing, wet and ragged, just inches from where you hide.\n\nThen silence. Long, terrible silence.\n\nWhen you finally peek out, the room is empty. But scratched into the floor in front of the desk are the words: 'FOUND YOU.'",
+                choices: [
+                    { text: "Open the chest now", next: 'openChestWithKey' },
+                    { text: "Run out of the cabin", next: 'northPath' }
+                ],
+                horror: true,
+                sanityDamage: 20
+            },
+            confrontEntity: {
+                text: "You stand your ground, gripping your dagger. The thing that descends the stairs is... wrong. It moves like a broken marionette, limbs bending in ways that should not be possible. Its face is blank, smooth as porcelain, but its mouth stretches impossibly wide.\n\nIt tilts its head at you, birdlike. 'Marcus?' it asks in a child's voice. Then, seeing you are not Marcus, it screams. The sound shatters the windows.",
+                choices: [
+                    { text: "Attack it", next: 'attackEntity' },
+                    { text: "Run!", next: 'escapeCabin' }
+                ],
+                horror: true,
+                sanityDamage: 25
+            },
+            attackEntity: {
+                text: "You lunge forward with your dagger. The blade passes through the creature like smoke, but where it touches, the thing recoils, shrieking. You slash again and again, driving it back toward the stairs.\n\nIt dissolves into shadows, but not before whispering: 'I will remember your face, traveler.'\n\nYou are alone. The cabin is silent. But you know it is not gone, just... waiting.",
+                choices: [
+                    { text: "Open the chest", next: 'openChestWithKey' },
+                    { text: "Leave while you can", next: 'northPath' }
+                ],
+                horror: true
+            },
+            useAmulet: {
+                text: "You raise the silver amulet. The shadows freeze, then retreat, hissing like steam. The path to the oak tree clears, but the amulet is growing hot, burning your skin. You can feel something vast and ancient turning its attention toward you.\n\nYou have its attention now. And it is curious.",
+                choices: [
+                    { text: "Approach the oak", next: 'start' },
+                    { text: "Run back", next: 'start' }
+                ],
+                horror: true,
+                sanityDamage: 15
+            },
+            hideWait: {
+                text: "You hide behind a thick tree trunk, holding your breath. Minutes pass. Then you hear it, footsteps, heavy and wrong, passing by your hiding spot. You catch a glimpse of it: too tall, too thin, moving on legs that bend backward.\n\nIt stops. Sniffs the air. Then continues on, dragging something behind it. Something that used to be a person.",
+                choices: [
+                    { text: "Wait longer", next: 'hideWaitLonger' },
+                    { text: "Sneak away north", next: 'northPath' }
+                ],
+                horror: true,
+                sanityDamage: 20
+            },
+            hideWaitLonger: {
+                text: "You wait until your legs cramp and your lungs burn. When you finally emerge, the footprints are gone, but carved into the tree you hid behind are fresh scratch marks. Deep, ragged, and shaped like words you cannot read but somehow understand: 'NEXT TIME.'",
+                choices: [
+                    { text: "Head north quickly", next: 'northPath' }
+                ],
+                sanityDamage: 10
+            },
+            climbTree: {
+                text: "You try to climb over the fallen tree. Halfway up, you feel something grab your ankle. It is cold, impossibly cold. You kick free and tumble to the other side, scrambling to your feet.\n\nBehind you, the tree is just a tree. But your ankle is bruised, and you can still feel those fingers.",
+                choices: [
+                    { text: "Run north", next: 'deepForest' },
+                    { text: "Go back to the cabin", next: 'enterCabin' }
+                ],
+                healthDamage: 10,
+                sanityDamage: 15
+            },
+            collectHerbs: {
+                text: "You carefully collect the herbs. As you touch them, they whisper your name. You drop them, but they keep whispering. You stuff them in your satchel, and the whispering stops.\n\nLater, when you check your satchel, the herbs have arranged themselves into a face. It is smiling at you.",
+                choices: [
+                    { text: "Throw them away", next: 'cabinBack' },
+                    { text: "Keep them and move on", next: 'northPath' }
+                ],
+                horror: true,
+                sanityDamage: 10
+            },
+            investigateWarning: {
+                text: "You trace the scratches with your finger. As you do, the leather grows warm, then hot. A vision flashes in your mind: the old woman by the fire, but her true form, a thing of shadows and hunger, wearing a human skin like a coat.\n\nThe vision fades. You are on your knees, gasping. The warning was not a warning. It was a message. From someone who did not survive.",
+                choices: [
+                    { text: "Head north, avoid the east", next: 'northPath' },
+                    { text: "Go east anyway, prepared", next: 'eastLight' }
+                ],
+                sanityDamage: 15
+            },
+            leaveMeat: {
+                text: "You leave the breathing meat and take only the flask and bandages. As you turn to leave, you hear a wet chewing sound from behind you. The meat is gone. In its place, a message written in something dark: 'WISE CHOICE.'",
+                choices: [
+                    { text: "Read the journal", next: 'readJournal' },
+                    { text: "Leave the cabin", next: 'northPath' }
+                ],
+                horror: true
+            },
+            askMarcus: {
+                text: "'Marcus is everywhere now,' the doll says, its head rotating slowly. 'He is in the walls. In the floor. In the trees. Marcus wanted to leave, so the forest made him part of it. Just like it will make you part of it, if you try to leave.'\n\nThe doll's eyes blink, though they have no lids. 'Do you want to be part of the forest, traveler?'",
+                choices: [
+                    { text: "Say no and back away", next: 'readJournal' },
+                    { text: "Ask how to avoid Marcus's fate", next: 'avoidFate' }
+                ],
+                horror: true,
+                sanityDamage: 20
+            },
+            throwDoll: {
+                text: "You grab the doll and hurl it out the window. It does not break. It stands up in the grass below, tilting its head up at you. Then it waves.\n\nWhen you look back at the room, the rocking chair has stopped. On the seat is a key. The key to the chest.",
+                choices: [
+                    { text: "Take the key", next: 'findKey' },
+                    { text: "Leave the key and run", next: 'northPath' }
+                ],
+                horror: true
+            },
+            askForestWants: {
+                text: "'The forest wants what it has always wanted,' the old woman says, her voice dropping to a whisper. 'It wants to grow. To consume. To become everything. And it needs souls to do that. Fresh souls. Souls that still remember what it was like to be human.'\n\nShe touches your face. Her fingers are ice cold. 'You still remember, do you not, child? You still feel fear. The forest loves fear. It feeds on it.'",
+                choices: [
+                    { text: "Pull away and run", next: 'northPath' },
+                    { text: "Ask how to escape", next: 'escapeForest' }
+                ],
+                horror: true,
+                sanityDamage: 10
+            },
+            eraseWords: {
+                text: "You try to erase the words in the ashes, but your fingers pass through them like they are made of smoke. The words rise, floating in the air, then dissolve into your skin. You can feel them now, under your skin, moving, pulsing.\n\n'I WILL SEE YOU AGAIN, CHILD.' The voice is inside your head now. And it is laughing.",
+                choices: [
+                    { text: "Run north, do not look back", next: 'northPath' }
+                ],
+                sanityDamage: 20
+            },
+            apologize: {
+                text: "You apologize profusely. The old woman's expression softens, but her eyes remain cold. 'Apology accepted, child. But apologies do not feed the forest. Actions do.' She hands you a small vial of red liquid. 'Drink this. It will help you see what needs to be seen.'",
+                choices: [
+                    { text: "Drink it", next: 'drinkVial' },
+                    { text: "Refuse and leave", next: 'northPath' }
+                ],
+                horror: true
+            },
+            drinkVial: {
+                text: "You drink the liquid. It tastes like copper and honey. The world shifts. Colors you have never seen before bleed into your vision. You can see the threads now, the invisible threads that connect every living thing in the forest. And you can see the thing at the center, pulling those threads.\n\nIt sees you too. It smiles. (+20 Sanity, but at what cost?)",
+                choices: [
+                    { text: "Head north with new sight", next: 'northPath' }
+                ],
+                sanityBonus: 20
+            },
+            askWant: {
+                text: "'I want what the forest wants,' she says simply. 'I want you to find the amulet. I want you to bring it to the old oak. And then...' She pauses, her smile widening. 'And then I want to see what happens when a human tries to wield power that was never meant for them.'",
+                choices: [
+                    { text: "Agree and head north", next: 'northPath' },
+                    { text: "Refuse and run", next: 'northPath' }
+                ],
+                horror: true
+            },
+            avoidFate: {
+                text: "'There is only one way to avoid the forest's embrace,' the doll whispers. 'You must become more terrible than the forest itself. You must become the thing that even shadows fear.' The doll's face cracks, revealing darkness beneath. 'But are you willing to pay that price, traveler? Are you willing to become a monster to survive?'",
+                choices: [
+                    { text: "Say you will do what it takes", next: 'readJournal' },
+                    { text: "Say you will find another way", next: 'readJournal' }
+                ],
+                horror: true,
+                sanityDamage: 15
+            },
+            escapeForest: {
+                text: "'There is no escape,' the old woman says, and for the first time, she sounds sad. 'Not for you. Not for me. Not for anyone who steps into the Darkwood. The forest does not let go. It only... waits.' She looks at the trees around you. 'But there is a way to survive. For a time. Find the amulet. Wield its power. Become something the forest fears.'",
+                choices: [
+                    { text: "Ask where to find the amulet", next: 'acceptTea' },
+                    { text: "Leave and head north", next: 'northPath' }
+                ],
+                horror: true
+            },
+            leaveAmulet: {
+                text: "You leave the amulet in the chest and take only the healing potion. As you turn to leave, the footsteps resume, closer now. You run, not looking back, not stopping until the cabin is far behind you.\n\nYou are safe. For now. But without the amulet's protection, the shadows feel closer. Hungrier.",
+                choices: [
+                    { text: "Continue north", next: 'deepForest' }
+                ],
+                sanityDamage: 10
             }
         };
 
-        // ============ UI MANAGEMENT ============
+        // ============ UI MANAGER ============
         class UIManager {
             constructor(gameState) {
                 this.gameState = gameState;
+                this.horrorEngine = null;
                 this.elements = {
                     mainMenu: document.getElementById('main-menu'),
                     settingsScreen: document.getElementById('settings-screen'),
@@ -821,59 +1664,62 @@
                     playerInput: document.getElementById('player-input'),
                     inventoryList: document.getElementById('inventory-list'),
                     health: document.getElementById('health'),
+                    healthBar: document.getElementById('health-bar'),
+                    sanity: document.getElementById('sanity'),
+                    sanityBar: document.getElementById('sanity-bar'),
                     level: document.getElementById('level'),
                     locationName: document.getElementById('location-name')
                 };
-                
+
                 this.setupEventListeners();
                 this.applySettings();
                 this.updateContinueButton();
             }
 
             setupEventListeners() {
-                // Main Menu Buttons
                 document.getElementById('play-btn').addEventListener('click', () => this.startNewGame());
                 document.getElementById('continue-btn').addEventListener('click', () => this.continueGame());
                 document.getElementById('settings-btn').addEventListener('click', () => this.showSettings());
-                
-                // Settings Screen
+
                 document.getElementById('back-to-menu').addEventListener('click', () => this.showScreen('main-menu'));
                 document.getElementById('delete-save').addEventListener('click', () => this.deleteSaveData());
-                
-                // Settings inputs
+
                 document.getElementById('music-volume').addEventListener('input', (e) => {
                     this.gameState.settings.musicVolume = e.target.value;
                     document.getElementById('music-value').textContent = e.target.value + '%';
                     this.gameState.saveSettings();
                 });
-                
+
                 document.getElementById('sfx-volume').addEventListener('input', (e) => {
                     this.gameState.settings.sfxVolume = e.target.value;
                     document.getElementById('sfx-value').textContent = e.target.value + '%';
                     this.gameState.saveSettings();
                 });
-                
+
                 document.getElementById('text-speed').addEventListener('change', (e) => {
                     this.gameState.settings.textSpeed = e.target.value;
                     this.gameState.saveSettings();
                 });
-                
-                document.getElementById('dark-mode').addEventListener('change', (e) => {
-                    this.gameState.settings.darkMode = e.target.checked;
+
+                document.getElementById('flashlight-mode').addEventListener('change', (e) => {
+                    this.gameState.settings.flashlightMode = e.target.checked;
                     this.gameState.saveSettings();
                     this.applySettings();
                 });
-                
-                // Game Screen
+
                 document.getElementById('return-to-menu').addEventListener('click', () => {
                     if (confirm('Return to main menu? Unsaved progress will be lost.')) {
+                        if (this.horrorEngine) {
+                            this.horrorEngine.dispose();
+                            this.horrorEngine = null;
+                        }
                         this.showScreen('main-menu');
                     }
                 });
-                
+
                 document.getElementById('save-game-btn').addEventListener('click', () => this.saveGame());
                 document.getElementById('submit-input').addEventListener('click', () => this.handlePlayerInput());
-                
+
                 document.getElementById('player-input').addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
                         this.handlePlayerInput();
@@ -885,7 +1731,7 @@
                 document.querySelectorAll('.screen').forEach(screen => {
                     screen.classList.remove('active');
                 });
-                
+
                 switch(screenName) {
                     case 'main-menu':
                         this.elements.mainMenu.classList.add('active');
@@ -899,15 +1745,15 @@
                         this.elements.gameScreen.classList.add('active');
                         break;
                 }
-                
+
                 this.gameState.currentScreen = screenName;
             }
 
             startNewGame() {
-                // Reset game state
                 this.gameState.player = {
                     name: 'Adventurer',
                     health: 100,
+                    sanity: 100,
                     level: 1,
                     location: 'Darkwood Forest',
                     inventory: []
@@ -916,9 +1762,15 @@
                     currentChapter: 'start',
                     decisions: []
                 };
-                
+
                 this.showScreen('game');
                 this.updatePlayerStats();
+
+                if (!this.horrorEngine) {
+                    this.horrorEngine = new Horror3DEngine();
+                    this.horrorEngine.init();
+                }
+
                 this.showGameText(gameStory.start);
             }
 
@@ -927,16 +1779,20 @@
                     if (this.gameState.loadGame()) {
                         this.showScreen('game');
                         this.updatePlayerStats();
-                        
-                        // Try to load the current chapter, fallback to start
+
+                        if (!this.horrorEngine) {
+                            this.horrorEngine = new Horror3DEngine();
+                            this.horrorEngine.init();
+                        }
+
                         const currentChapter = this.gameState.gameProgress.currentChapter;
                         if (gameStory[currentChapter]) {
                             this.showGameText(gameStory[currentChapter]);
                         } else {
                             this.showGameText(gameStory.start);
                         }
-                        
-                        this.showNotification('Game loaded successfully!');
+
+                        this.showNotification('Nightmare continues...');
                     }
                 } else {
                     this.showNotification('No save data found!');
@@ -947,7 +1803,7 @@
                 const continueBtn = document.getElementById('continue-btn');
                 if (this.gameState.hasSaveData()) {
                     continueBtn.disabled = false;
-                    continueBtn.title = 'Continue your adventure';
+                    continueBtn.title = 'Continue your nightmare';
                 } else {
                     continueBtn.disabled = true;
                     continueBtn.title = 'No save data available';
@@ -964,33 +1820,53 @@
                 document.getElementById('sfx-volume').value = this.gameState.settings.sfxVolume;
                 document.getElementById('sfx-value').textContent = this.gameState.settings.sfxVolume + '%';
                 document.getElementById('text-speed').value = this.gameState.settings.textSpeed;
-                document.getElementById('dark-mode').checked = this.gameState.settings.darkMode;
+                document.getElementById('flashlight-mode').checked = this.gameState.settings.flashlightMode;
             }
 
             applySettings() {
-                document.body.style.filter = this.gameState.settings.darkMode ? 'none' : 'brightness(1.2)';
+                const flashlight = document.getElementById('flashlight');
+                if (flashlight) {
+                    flashlight.style.display = this.gameState.settings.flashlightMode ? 'block' : 'none';
+                }
             }
 
             saveGame() {
                 if (this.gameState.saveGame()) {
-                    this.showNotification('💾 Game saved successfully!');
+                    this.showNotification('💾 Nightmare saved...');
                 }
             }
 
             deleteSaveData() {
-                if (confirm('Are you sure you want to delete all save data? This cannot be undone.')) {
+                if (confirm('Are you sure you want to erase all memories? This cannot be undone.')) {
                     this.gameState.deleteSave();
                     this.updateContinueButton();
-                    this.showNotification('Save data deleted.');
+                    this.showNotification('Memories erased.');
                 }
             }
 
             updatePlayerStats() {
                 this.elements.health.textContent = this.gameState.player.health;
+                this.elements.sanity.textContent = this.gameState.player.sanity;
                 this.elements.level.textContent = this.gameState.player.level;
                 this.elements.locationName.textContent = this.gameState.player.location;
-                
-                // Update inventory
+
+                this.elements.healthBar.style.width = this.gameState.player.health + '%';
+                this.elements.sanityBar.style.width = this.gameState.player.sanity + '%';
+
+                if (this.gameState.player.health <= 30) {
+                    this.elements.healthBar.style.background = 'linear-gradient(90deg, #ff0000, #ff4444)';
+                    document.body.classList.add('heartbeat');
+                } else {
+                    this.elements.healthBar.style.background = 'linear-gradient(90deg, #8b0000, #ff0000)';
+                    document.body.classList.remove('heartbeat');
+                }
+
+                if (this.gameState.player.sanity <= 30) {
+                    this.elements.sanityBar.style.background = 'linear-gradient(90deg, #8000ff, #ff00ff)';
+                } else {
+                    this.elements.sanityBar.style.background = 'linear-gradient(90deg, #4a0080, #8000ff)';
+                }
+
                 this.elements.inventoryList.innerHTML = '';
                 if (this.gameState.player.inventory.length === 0) {
                     this.elements.inventoryList.innerHTML = '<li>Empty</li>';
@@ -1006,15 +1882,13 @@
             showGameText(storyNode) {
                 const textElement = this.elements.gameText;
                 const choicesElement = this.elements.gameChoices;
-                
-                // Clear previous content
+
                 textElement.textContent = '';
                 choicesElement.innerHTML = '';
-                
-                // Typewriter effect based on text speed
+
                 const speed = this.gameState.settings.textSpeed;
-                const delay = speed === 'fast' ? 15 : speed === 'slow' ? 50 : 30;
-                
+                const delay = speed === 'fast' ? 10 : speed === 'slow' ? 40 : 25;
+
                 let i = 0;
                 const typeWriter = () => {
                     if (i < storyNode.text.length) {
@@ -1023,65 +1897,107 @@
                         textElement.scrollTop = textElement.scrollHeight;
                         setTimeout(typeWriter, delay);
                     } else {
-                        // Show choices after text is complete
                         storyNode.choices.forEach((choice, index) => {
                             const button = document.createElement('button');
                             button.className = 'choice-btn';
-                            button.textContent = `${index + 1}. ${choice.text}`;
+                            button.textContent = (index + 1) + '. ' + choice.text;
                             button.addEventListener('click', () => this.makeChoice(choice));
                             choicesElement.appendChild(button);
                         });
                     }
                 };
-                
+
                 typeWriter();
+
+                if (storyNode.horror) {
+                    this.triggerHorrorEffect();
+                }
+            }
+
+            triggerHorrorEffect() {
+                const effects = ['screen-shake', 'heartbeat'];
+                const effect = effects[Math.floor(Math.random() * effects.length)];
+                document.body.classList.add(effect);
+
+                setTimeout(() => {
+                    document.body.classList.remove(effect);
+                }, 500);
+
+                if (Math.random() > 0.7 && this.horrorEngine) {
+                    this.horrorEngine.ghostLight.intensity = 2;
+                    setTimeout(() => {
+                        if (this.horrorEngine) {
+                            this.horrorEngine.ghostLight.intensity = 0.5;
+                        }
+                    }, 200);
+                }
             }
 
             makeChoice(choice) {
-                // Add decision to history
                 this.gameState.gameProgress.decisions.push({
                     chapter: this.gameState.gameProgress.currentChapter,
                     choice: choice.text
                 });
-                
-                // Handle special game events based on choices
+
                 this.handleSpecialEvents(choice);
-                
-                // Move to next chapter
+
+                if (choice.next === 'menu') {
+                    if (this.horrorEngine) {
+                        this.horrorEngine.dispose();
+                        this.horrorEngine = null;
+                    }
+                    this.showScreen('main-menu');
+                    return;
+                }
+
                 if (gameStory[choice.next]) {
                     this.gameState.gameProgress.currentChapter = choice.next;
                     this.showGameText(gameStory[choice.next]);
                 } else {
-                    // Fallback
                     const fallbackText = {
-                        text: "You continue your journey through the Darkwood Forest. The path ahead is still shrouded in mystery...\n\n(More content coming soon!)",
+                        text: "You continue your journey through the Darkwood Forest. The path ahead is still shrouded in mystery...\n\n(More nightmares coming soon!)",
                         choices: [
                             { text: "Continue exploring", next: 'start' }
                         ]
                     };
                     this.showGameText(fallbackText);
                 }
-                
+
                 this.updatePlayerStats();
                 this.autoSave();
             }
 
             handleSpecialEvents(choice) {
-                // Handle inventory changes based on choices
-                if (choice.next === 'searchArea') {
+                const next = choice.next;
+                const node = gameStory[next];
+
+                if (node) {
+                    if (node.healthDamage) {
+                        this.gameState.player.health = Math.max(0, this.gameState.player.health - node.healthDamage);
+                    }
+                    if (node.sanityDamage) {
+                        this.gameState.player.sanity = Math.max(0, this.gameState.player.sanity - node.sanityDamage);
+                    }
+                    if (node.healthBonus) {
+                        this.gameState.player.health = Math.min(100, this.gameState.player.health + node.healthBonus);
+                    }
+                    if (node.sanityBonus) {
+                        this.gameState.player.sanity = Math.min(100, this.gameState.player.sanity + node.sanityBonus);
+                    }
+                }
+
+                if (next === 'searchArea') {
                     this.addToInventory(['Rusty Dagger', 'Mysterious Parchment', '3 Gold Coins', 'Healing Potion']);
-                } else if (choice.next === 'openChestWithKey') {
+                } else if (next === 'openChestWithKey') {
                     this.addToInventory(['Silver Amulet', 'Healing Potion']);
-                } else if (choice.next === 'findKey') {
+                } else if (next === 'findKey') {
                     this.addToInventory(['Rusty Iron Key']);
-                } else if (choice.next === 'acceptTea') {
-                    this.gameState.player.health = Math.min(100, this.gameState.player.health + 20);
-                } else if (choice.next === 'restInCabin') {
-                    this.gameState.player.health = Math.min(100, this.gameState.player.health + 30);
-                } else if (choice.next === 'cabinBack') {
-                    this.gameState.player.health = Math.min(100, this.gameState.player.health + 10);
-                } else if (choice.next === 'searchSupplies') {
+                } else if (next === 'searchSupplies') {
                     this.addToInventory(['Dried Meat', 'Water Flask', 'Bandages']);
+                } else if (next === 'collectHerbs') {
+                    this.addToInventory(['Whispering Herbs']);
+                } else if (next === 'drinkVial') {
+                    this.addToInventory(['Second Sight']);
                 }
             }
 
@@ -1102,7 +2018,7 @@
                 const input = document.getElementById('player-input');
                 const command = input.value.trim().toLowerCase();
                 input.value = '';
-                
+
                 if (command) {
                     this.processCommand(command);
                 }
@@ -1110,43 +2026,42 @@
 
             processCommand(command) {
                 const textElement = this.elements.gameText;
-                
-                // Command processing
+
                 if (command.includes('look') || command.includes('examine')) {
-                    textElement.textContent += '\n\n> You look around carefully, taking in your surroundings.';
+                    textElement.textContent += '\n\n> You look around carefully, taking in your surroundings. The darkness seems to watch back.';
                 } else if (command.includes('inventory') || command.includes('bag')) {
                     const inv = this.gameState.player.inventory;
                     textElement.textContent += '\n\n> Inventory: ' + (inv.length > 0 ? inv.join(', ') : 'Empty');
                 } else if (command.includes('health') || command.includes('hp')) {
-                    textElement.textContent += `\n\n> Health: ${this.gameState.player.health}/100`;
+                    textElement.textContent += '\n\n> Health: ' + this.gameState.player.health + '/100';
+                } else if (command.includes('sanity')) {
+                    textElement.textContent += '\n\n> Sanity: ' + this.gameState.player.sanity + '/100';
                 } else if (command.includes('help')) {
-                    textElement.textContent += '\n\n> Available commands: look, inventory, health, help';
+                    textElement.textContent += '\n\n> Available commands: look, inventory, health, sanity, help, save, load';
                 } else if (command.includes('save')) {
                     this.saveGame();
-                    textElement.textContent += '\n\n> Game saved!';
+                    textElement.textContent += '\n\n> Nightmare saved...';
                 } else if (command.includes('load')) {
                     if (this.gameState.hasSaveData()) {
                         this.continueGame();
                     } else {
-                        textElement.textContent += '\n\n> No save data found.';
+                        textElement.textContent += '\n\n> No memories found.';
                     }
                 } else {
-                    textElement.textContent += `\n\n> "${command}" - Nothing happens. Type "help" for available commands.`;
+                    textElement.textContent += '\n\n> "' + command + '" - Nothing happens. Type "help" for available commands.';
                 }
-                
-                // Scroll to bottom
+
                 textElement.scrollTop = textElement.scrollHeight;
             }
 
             showNotification(message) {
-                // Remove existing notifications
                 document.querySelectorAll('.notification').forEach(n => n.remove());
-                
+
                 const notification = document.createElement('div');
                 notification.className = 'notification';
                 notification.textContent = message;
                 document.body.appendChild(notification);
-                
+
                 setTimeout(() => {
                     notification.style.animation = 'slideOut 0.3s ease';
                     setTimeout(() => notification.remove(), 300);
@@ -1154,13 +2069,12 @@
             }
         }
 
-        // ============ INITIALIZE GAME ============
+        // ============ INITIALIZE ============
         const gameState = new GameState();
         const uiManager = new UIManager(gameState);
 
-        console.log('Darkwood Chronicles - Text Adventure Game');
-        console.log('Ready to play! Click "Play" to start your adventure.');
-        console.log('Tip: You can type commands like "look", "inventory", "health", or "help" in the game!');
+        console.log('Darkwood Chronicles - 3D Horror Experience');
+        console.log('Ready to enter the darkness...');
     </script>
 </body>
 </html>
