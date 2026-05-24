@@ -4,14 +4,500 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Darkwood Chronicles - Text Adventure</title>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .screen {
+            display: none;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Main Menu Styles */
+        .menu-container {
+            width: 100%;
+            height: 100%;
+            background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: #0a0a0a;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1;
+        }
+
+        .menu-background {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 60px 80px;
+            border-radius: 15px;
+            border: 2px solid #4a4a4a;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-title {
+            font-size: 4em;
+            color: #c9a959;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+            margin-bottom: 10px;
+            letter-spacing: 3px;
+        }
+
+        .game-subtitle {
+            font-size: 1.2em;
+            color: #8a8a8a;
+            margin-bottom: 50px;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .menu-btn {
+            width: 250px;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+            color: #c9a959;
+            border: 2px solid #c9a959;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .menu-btn:hover {
+            background: linear-gradient(135deg, #c9a959, #8a7a3a);
+            color: #1a1a1a;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(201, 169, 89, 0.5);
+        }
+
+        .menu-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .version-text {
+            margin-top: 40px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        /* Settings Styles */
+        .settings-container {
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            border: 2px solid #4a4a4a;
+        }
+
+        .settings-container h2 {
+            color: #c9a959;
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 40px;
+        }
+
+        .setting-item {
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .setting-item label {
+            color: #e0e0e0;
+            font-size: 1.1em;
+        }
+
+        .setting-item input[type="range"] {
+            width: 200px;
+        }
+
+        .setting-item select {
+            padding: 8px 15px;
+            background: #2a2a2a;
+            color: #e0e0e0;
+            border: 1px solid #4a4a4a;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .value-display {
+            color: #c9a959;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #2a2a2a;
+            transition: .4s;
+            border-radius: 34px;
+            border: 1px solid #4a4a4a;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: #c9a959;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #3a3a3a;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .danger-btn {
+            padding: 8px 20px;
+            background: #5a1a1a;
+            color: #ff6b6b;
+            border: 1px solid #ff6b6b;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .danger-btn:hover {
+            background: #ff6b6b;
+            color: #1a1a1a;
+        }
+
+        /* Game Screen Styles */
+        #game-screen {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .game-container {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            padding: 30px;
+            border: 2px solid #2a2a4a;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #2a2a4a;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .player-stats {
+            display: flex;
+            gap: 30px;
+            color: #c9a959;
+            font-size: 1.1em;
+            flex-wrap: wrap;
+        }
+
+        .small-btn {
+            padding: 8px 20px;
+            background: #2a2a2a;
+            color: #c9a959;
+            border: 1px solid #c9a959;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .small-btn:hover {
+            background: #c9a959;
+            color: #1a1a1a;
+        }
+
+        .game-text {
+            flex: 1;
+            color: #d0d0d0;
+            font-size: 1.1em;
+            line-height: 1.8;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            min-height: 200px;
+            max-height: 400px;
+        }
+
+        .game-choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .choice-btn {
+            padding: 12px 20px;
+            background: #2a2a4a;
+            color: #c9a959;
+            border: 1px solid #4a4a6a;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            transition: all 0.3s ease;
+        }
+
+        .choice-btn:hover {
+            background: #3a3a6a;
+            border-color: #c9a959;
+            transform: translateX(5px);
+        }
+
+        .game-input-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #player-input {
+            flex: 1;
+            padding: 12px;
+            background: #1a1a2e;
+            border: 1px solid #4a4a6a;
+            color: #e0e0e0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+        }
+
+        #player-input:focus {
+            outline: none;
+            border-color: #c9a959;
+        }
+
+        #submit-input {
+            padding: 12px 20px;
+            background: #2a2a4a;
+            color: #c9a959;
+            border: 1px solid #c9a959;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+
+        #submit-input:hover {
+            background: #c9a959;
+            color: #1a1a1a;
+        }
+
+        .inventory-panel {
+            width: 250px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #2a2a4a;
+        }
+
+        .inventory-panel h3 {
+            color: #c9a959;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            border-bottom: 1px solid #2a2a4a;
+            padding-bottom: 10px;
+        }
+
+        #inventory-list {
+            list-style: none;
+            color: #d0d0d0;
+        }
+
+        #inventory-list li {
+            padding: 8px;
+            margin-bottom: 5px;
+            background: rgba(42, 42, 74, 0.5);
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2a2a2a;
+            color: #c9a959;
+            padding: 15px 25px;
+            border: 1px solid #c9a959;
+            border-radius: 5px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        /* Scrollbar Styles */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4a4a4a;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #c9a959;
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .menu-background {
+                padding: 40px 30px;
+                margin: 20px;
+            }
+            
+            .game-title {
+                font-size: 2.5em;
+            }
+            
+            .menu-btn {
+                width: 200px;
+                padding: 12px 25px;
+                font-size: 1em;
+            }
+            
+            #game-screen {
+                flex-direction: column;
+            }
+            
+            .inventory-panel {
+                width: 100%;
+            }
+            
+            .player-stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .settings-container {
+                margin: 20px;
+                padding: 20px;
+            }
+
+            .game-container {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .game-title {
+                font-size: 2em;
+            }
+
+            .game-subtitle {
+                font-size: 1em;
+            }
+
+            .menu-background {
+                padding: 30px 20px;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Main Menu Screen -->
     <div id="main-menu" class="screen active">
         <div class="menu-container">
+            <div class="menu-overlay"></div>
             <div class="menu-background">
-                <div class="menu-overlay"></div>
                 <h1 class="game-title">Darkwood Chronicles</h1>
                 <p class="game-subtitle">A Text Adventure Game</p>
                 
@@ -29,22 +515,22 @@
     <!-- Settings Screen -->
     <div id="settings-screen" class="screen">
         <div class="settings-container">
-            <h2>Settings</h2>
+            <h2>⚙️ Settings</h2>
             
             <div class="setting-item">
-                <label>Music Volume</label>
+                <label>🎵 Music Volume</label>
                 <input type="range" id="music-volume" min="0" max="100" value="50">
-                <span id="music-value">50%</span>
+                <span class="value-display" id="music-value">50%</span>
             </div>
             
             <div class="setting-item">
-                <label>Sound Effects</label>
+                <label>🔊 Sound Effects</label>
                 <input type="range" id="sfx-volume" min="0" max="100" value="70">
-                <span id="sfx-value">70%</span>
+                <span class="value-display" id="sfx-value">70%</span>
             </div>
             
             <div class="setting-item">
-                <label>Text Speed</label>
+                <label>📝 Text Speed</label>
                 <select id="text-speed">
                     <option value="slow">Slow</option>
                     <option value="normal" selected>Normal</option>
@@ -53,7 +539,7 @@
             </div>
             
             <div class="setting-item">
-                <label>Dark Mode</label>
+                <label>🌙 Dark Mode</label>
                 <label class="switch">
                     <input type="checkbox" id="dark-mode" checked>
                     <span class="slider"></span>
@@ -61,11 +547,11 @@
             </div>
             
             <div class="setting-item">
-                <label>Delete Save Data</label>
+                <label>🗑️ Delete Save Data</label>
                 <button id="delete-save" class="danger-btn">Delete</button>
             </div>
             
-            <button id="back-to-menu" class="menu-btn">Back to Menu</button>
+            <button id="back-to-menu" class="menu-btn" style="width: 100%; margin-top: 20px;">Back to Menu</button>
         </div>
     </div>
 
@@ -74,11 +560,14 @@
         <div class="game-container">
             <div class="game-header">
                 <div class="player-stats">
-                    <span>🏰 Location: <span id="location-name">Darkwood Forest</span></span>
-                    <span>❤️ Health: <span id="health">100</span></span>
+                    <span>🏰 <span id="location-name">Darkwood Forest</span></span>
+                    <span>❤️ <span id="health">100</span></span>
                     <span>⭐ Level: <span id="level">1</span></span>
                 </div>
-                <button id="save-game-btn" class="small-btn">Save Game</button>
+                <div style="display: flex; gap: 10px;">
+                    <button id="save-game-btn" class="small-btn">💾 Save</button>
+                    <button id="return-to-menu" class="small-btn">🏠 Menu</button>
+                </div>
             </div>
             
             <div id="game-text" class="game-text">
@@ -89,22 +578,589 @@
                 <!-- Dynamic choices will appear here -->
             </div>
             
-            <div class="game-input-area" style="display: none;">
-                <input type="text" id="player-input" placeholder="Type your action...">
+            <div class="game-input-area">
+                <input type="text" id="player-input" placeholder="Type your action... (try 'help')">
                 <button id="submit-input">Submit</button>
             </div>
-            
-            <button id="return-to-menu" class="small-btn">Return to Menu</button>
         </div>
         
         <div class="inventory-panel">
-            <h3>Inventory</h3>
+            <h3>🎒 Inventory</h3>
             <ul id="inventory-list">
                 <li>Empty</li>
             </ul>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        // ============ GAME STATE MANAGEMENT ============
+        class GameState {
+            constructor() {
+                this.currentScreen = 'main-menu';
+                this.player = {
+                    name: 'Adventurer',
+                    health: 100,
+                    level: 1,
+                    location: 'Darkwood Forest',
+                    inventory: []
+                };
+                this.gameProgress = {
+                    currentChapter: 'start',
+                    decisions: []
+                };
+                this.settings = {
+                    musicVolume: 50,
+                    sfxVolume: 70,
+                    textSpeed: 'normal',
+                    darkMode: true
+                };
+                this.loadSettings();
+            }
+
+            saveGame() {
+                const saveData = {
+                    player: this.player,
+                    gameProgress: this.gameProgress,
+                    timestamp: new Date().toISOString()
+                };
+                localStorage.setItem('darkwood-save', JSON.stringify(saveData));
+                return true;
+            }
+
+            loadGame() {
+                const saveData = localStorage.getItem('darkwood-save');
+                if (saveData) {
+                    const parsed = JSON.parse(saveData);
+                    this.player = parsed.player;
+                    this.gameProgress = parsed.gameProgress;
+                    return true;
+                }
+                return false;
+            }
+
+            hasSaveData() {
+                return localStorage.getItem('darkwood-save') !== null;
+            }
+
+            deleteSave() {
+                localStorage.removeItem('darkwood-save');
+            }
+
+            saveSettings() {
+                localStorage.setItem('darkwood-settings', JSON.stringify(this.settings));
+            }
+
+            loadSettings() {
+                const settingsData = localStorage.getItem('darkwood-settings');
+                if (settingsData) {
+                    this.settings = { ...this.settings, ...JSON.parse(settingsData) };
+                }
+            }
+        }
+
+        // ============ GAME STORY DATA ============
+        const gameStory = {
+            start: {
+                text: "You awaken in the Darkwood Forest, the ancient trees looming overhead like silent sentinels. The air is thick with mist, and you can hear the distant howl of wolves.\n\nA worn path leads north, while a faint light flickers to the east. You notice your leather satchel nearby.",
+                choices: [
+                    { text: "Follow the path north", next: 'northPath' },
+                    { text: "Investigate the light to the east", next: 'eastLight' },
+                    { text: "Search your satchel", next: 'searchArea' }
+                ]
+            },
+            northPath: {
+                text: "The path winds through the dark forest. After walking for what feels like hours, you come across an old, abandoned cabin. The door creaks open in the wind, revealing darkness within.",
+                choices: [
+                    { text: "Enter the cabin", next: 'enterCabin' },
+                    { text: "Continue past the cabin", next: 'continuePast' },
+                    { text: "Circle around to the back", next: 'cabinBack' }
+                ]
+            },
+            eastLight: {
+                text: "You push through the underbrush towards the flickering light. You discover a small campfire with a hooded figure sitting beside it. The figure turns towards you, revealing an old woman's weathered face.",
+                choices: [
+                    { text: "Approach the woman", next: 'approachWoman' },
+                    { text: "Hide and observe", next: 'hideObserve' },
+                    { text: "Call out a greeting", next: 'greetWoman' }
+                ]
+            },
+            searchArea: {
+                text: "You search your satchel and find it contains: a rusty dagger, a piece of parchment with strange markings, three gold coins, and a small healing potion.",
+                choices: [
+                    { text: "Take everything and head north", next: 'northPath' },
+                    { text: "Take only the dagger and go east", next: 'eastLight' },
+                    { text: "Read the parchment first", next: 'readParchment' }
+                ]
+            },
+            enterCabin: {
+                text: "The cabin interior is dusty but surprisingly well-preserved. A journal lies open on a desk, and a locked chest sits in the corner. The floorboards creak beneath your feet.",
+                choices: [
+                    { text: "Read the journal", next: 'readJournal' },
+                    { text: "Try to open the chest", next: 'openChest' },
+                    { text: "Search for supplies", next: 'searchSupplies' }
+                ]
+            },
+            approachWoman: {
+                text: "The old woman smiles warmly as you approach. 'Ah, another lost soul,' she says, her voice like rustling leaves. 'Sit, child. I have tea and answers for those who seek them.'",
+                choices: [
+                    { text: "Accept her offer", next: 'acceptTea' },
+                    { text: "Ask about the forest", next: 'askForest' },
+                    { text: "Politely decline and continue north", next: 'northPath' }
+                ]
+            },
+            readParchment: {
+                text: "The parchment contains a crude map of the forest with an 'X' marked near a cave to the north. Beneath the map, it reads: 'The Amulet of Shadows lies within. Beware the Guardian.'",
+                choices: [
+                    { text: "Follow the map north", next: 'northPath' },
+                    { text: "Take everything and go east first", next: 'eastLight' }
+                ]
+            },
+            readJournal: {
+                text: "The journal belongs to a hunter named Marcus. The last entry reads: 'I've tracked the beast to its lair near the old oak. It guards something precious, but I'm too weak to continue. To whoever finds this - the chest key is hidden under the hearthstone.'",
+                choices: [
+                    { text: "Look under the hearthstone", next: 'findKey' },
+                    { text: "Leave the cabin", next: 'northPath' }
+                ]
+            },
+            findKey: {
+                text: "You lift the hearthstone and find a rusty iron key! This must open the chest in the corner.",
+                choices: [
+                    { text: "Open the chest", next: 'openChestWithKey' },
+                    { text: "Keep the key and explore elsewhere", next: 'northPath' }
+                ]
+            },
+            openChest: {
+                text: "The chest is locked tight. You'll need to find a key somewhere in the cabin.",
+                choices: [
+                    { text: "Search the cabin more thoroughly", next: 'readJournal' },
+                    { text: "Give up and leave", next: 'northPath' }
+                ]
+            },
+            openChestWithKey: {
+                text: "The key fits perfectly! Inside the chest, you find a silver amulet that glows faintly, a healing potion, and a note: 'The amulet will protect you from the shadows. Use it wisely.'",
+                choices: [
+                    { text: "Equip the amulet and head north", next: 'northPath' },
+                    { text: "Stay and rest in the cabin", next: 'restInCabin' }
+                ]
+            },
+            hideObserve: {
+                text: "You hide behind a large tree and watch. The old woman seems to be brewing something in a small pot. After a while, she speaks: 'I know you're there, traveler. No need to hide.'",
+                choices: [
+                    { text: "Reveal yourself", next: 'approachWoman' },
+                    { text: "Flee back to the main path", next: 'northPath' }
+                ]
+            },
+            greetWoman: {
+                text: "'Hello there!' you call out. The old woman looks up and smiles. 'Well met, traveler! Come, warm yourself by the fire. The forest is dangerous at night.'",
+                choices: [
+                    { text: "Join her at the fire", next: 'approachWoman' },
+                    { text: "Thank her but continue on", next: 'northPath' }
+                ]
+            },
+            acceptTea: {
+                text: "The tea is warm and surprisingly revitalizing. 'The forest holds many secrets,' the woman says. 'Seek the old oak tree to the north. There you'll find what you need.'\n\nYou feel refreshed! (+20 Health)",
+                choices: [
+                    { text: "Thank her and head north", next: 'northPath' },
+                    { text: "Ask more questions", next: 'askForest' }
+                ]
+            },
+            askForest: {
+                text: "'The Darkwood is ancient,' she explains. 'It was once a place of great magic. Now shadows lurk here. But there is still hope - the Amulet of Shadows can restore balance.'",
+                choices: [
+                    { text: "Ask where to find the amulet", next: 'acceptTea' },
+                    { text: "Thank her and leave", next: 'northPath' }
+                ]
+            },
+            searchSupplies: {
+                text: "You search the cabin and find some dried meat, a water flask, and bandages. These will be useful for your journey.",
+                choices: [
+                    { text: "Take supplies and read the journal", next: 'readJournal' },
+                    { text: "Take supplies and leave", next: 'northPath' }
+                ]
+            },
+            restInCabin: {
+                text: "You decide to rest in the cabin. It's warm and safe. You recover some health and feel ready to continue your adventure.\n\n(+30 Health)",
+                choices: [
+                    { text: "Continue your journey north", next: 'northPath' },
+                    { text: "Head east to investigate the light", next: 'eastLight' }
+                ]
+            },
+            continuePast: {
+                text: "You continue past the cabin. The forest grows darker and more ominous. You can hear strange whispers among the trees. Perhaps you should have explored the cabin...",
+                choices: [
+                    { text: "Press on regardless", next: 'deepForest' },
+                    { text: "Turn back to the cabin", next: 'enterCabin' }
+                ]
+            },
+            cabinBack: {
+                text: "Behind the cabin, you find a small garden with medicinal herbs and a fresh water spring. You gather some herbs and drink from the spring.\n\n(+10 Health)",
+                choices: [
+                    { text: "Enter the cabin", next: 'enterCabin' },
+                    { text: "Continue your journey", next: 'northPath' }
+                ]
+            },
+            deepForest: {
+                text: "You venture deeper into the forest. The trees seem to close in around you. In the distance, you spot a massive old oak tree with something glinting in its branches...\n\nTo be continued...",
+                choices: [
+                    { text: "Approach the old oak", next: 'start' },
+                    { text: "Return to the main path", next: 'start' }
+                ]
+            }
+        };
+
+        // ============ UI MANAGEMENT ============
+        class UIManager {
+            constructor(gameState) {
+                this.gameState = gameState;
+                this.elements = {
+                    mainMenu: document.getElementById('main-menu'),
+                    settingsScreen: document.getElementById('settings-screen'),
+                    gameScreen: document.getElementById('game-screen'),
+                    gameText: document.getElementById('game-text'),
+                    gameChoices: document.getElementById('game-choices'),
+                    playerInput: document.getElementById('player-input'),
+                    inventoryList: document.getElementById('inventory-list'),
+                    health: document.getElementById('health'),
+                    level: document.getElementById('level'),
+                    locationName: document.getElementById('location-name')
+                };
+                
+                this.setupEventListeners();
+                this.applySettings();
+                this.updateContinueButton();
+            }
+
+            setupEventListeners() {
+                // Main Menu Buttons
+                document.getElementById('play-btn').addEventListener('click', () => this.startNewGame());
+                document.getElementById('continue-btn').addEventListener('click', () => this.continueGame());
+                document.getElementById('settings-btn').addEventListener('click', () => this.showSettings());
+                
+                // Settings Screen
+                document.getElementById('back-to-menu').addEventListener('click', () => this.showScreen('main-menu'));
+                document.getElementById('delete-save').addEventListener('click', () => this.deleteSaveData());
+                
+                // Settings inputs
+                document.getElementById('music-volume').addEventListener('input', (e) => {
+                    this.gameState.settings.musicVolume = e.target.value;
+                    document.getElementById('music-value').textContent = e.target.value + '%';
+                    this.gameState.saveSettings();
+                });
+                
+                document.getElementById('sfx-volume').addEventListener('input', (e) => {
+                    this.gameState.settings.sfxVolume = e.target.value;
+                    document.getElementById('sfx-value').textContent = e.target.value + '%';
+                    this.gameState.saveSettings();
+                });
+                
+                document.getElementById('text-speed').addEventListener('change', (e) => {
+                    this.gameState.settings.textSpeed = e.target.value;
+                    this.gameState.saveSettings();
+                });
+                
+                document.getElementById('dark-mode').addEventListener('change', (e) => {
+                    this.gameState.settings.darkMode = e.target.checked;
+                    this.gameState.saveSettings();
+                    this.applySettings();
+                });
+                
+                // Game Screen
+                document.getElementById('return-to-menu').addEventListener('click', () => {
+                    if (confirm('Return to main menu? Unsaved progress will be lost.')) {
+                        this.showScreen('main-menu');
+                    }
+                });
+                
+                document.getElementById('save-game-btn').addEventListener('click', () => this.saveGame());
+                document.getElementById('submit-input').addEventListener('click', () => this.handlePlayerInput());
+                
+                document.getElementById('player-input').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.handlePlayerInput();
+                    }
+                });
+            }
+
+            showScreen(screenName) {
+                document.querySelectorAll('.screen').forEach(screen => {
+                    screen.classList.remove('active');
+                });
+                
+                switch(screenName) {
+                    case 'main-menu':
+                        this.elements.mainMenu.classList.add('active');
+                        this.updateContinueButton();
+                        break;
+                    case 'settings':
+                        this.elements.settingsScreen.classList.add('active');
+                        this.updateSettingsDisplay();
+                        break;
+                    case 'game':
+                        this.elements.gameScreen.classList.add('active');
+                        break;
+                }
+                
+                this.gameState.currentScreen = screenName;
+            }
+
+            startNewGame() {
+                // Reset game state
+                this.gameState.player = {
+                    name: 'Adventurer',
+                    health: 100,
+                    level: 1,
+                    location: 'Darkwood Forest',
+                    inventory: []
+                };
+                this.gameState.gameProgress = {
+                    currentChapter: 'start',
+                    decisions: []
+                };
+                
+                this.showScreen('game');
+                this.updatePlayerStats();
+                this.showGameText(gameStory.start);
+            }
+
+            continueGame() {
+                if (this.gameState.hasSaveData()) {
+                    if (this.gameState.loadGame()) {
+                        this.showScreen('game');
+                        this.updatePlayerStats();
+                        
+                        // Try to load the current chapter, fallback to start
+                        const currentChapter = this.gameState.gameProgress.currentChapter;
+                        if (gameStory[currentChapter]) {
+                            this.showGameText(gameStory[currentChapter]);
+                        } else {
+                            this.showGameText(gameStory.start);
+                        }
+                        
+                        this.showNotification('Game loaded successfully!');
+                    }
+                } else {
+                    this.showNotification('No save data found!');
+                }
+            }
+
+            updateContinueButton() {
+                const continueBtn = document.getElementById('continue-btn');
+                if (this.gameState.hasSaveData()) {
+                    continueBtn.disabled = false;
+                    continueBtn.title = 'Continue your adventure';
+                } else {
+                    continueBtn.disabled = true;
+                    continueBtn.title = 'No save data available';
+                }
+            }
+
+            showSettings() {
+                this.showScreen('settings');
+            }
+
+            updateSettingsDisplay() {
+                document.getElementById('music-volume').value = this.gameState.settings.musicVolume;
+                document.getElementById('music-value').textContent = this.gameState.settings.musicVolume + '%';
+                document.getElementById('sfx-volume').value = this.gameState.settings.sfxVolume;
+                document.getElementById('sfx-value').textContent = this.gameState.settings.sfxVolume + '%';
+                document.getElementById('text-speed').value = this.gameState.settings.textSpeed;
+                document.getElementById('dark-mode').checked = this.gameState.settings.darkMode;
+            }
+
+            applySettings() {
+                document.body.style.filter = this.gameState.settings.darkMode ? 'none' : 'brightness(1.2)';
+            }
+
+            saveGame() {
+                if (this.gameState.saveGame()) {
+                    this.showNotification('💾 Game saved successfully!');
+                }
+            }
+
+            deleteSaveData() {
+                if (confirm('Are you sure you want to delete all save data? This cannot be undone.')) {
+                    this.gameState.deleteSave();
+                    this.updateContinueButton();
+                    this.showNotification('Save data deleted.');
+                }
+            }
+
+            updatePlayerStats() {
+                this.elements.health.textContent = this.gameState.player.health;
+                this.elements.level.textContent = this.gameState.player.level;
+                this.elements.locationName.textContent = this.gameState.player.location;
+                
+                // Update inventory
+                this.elements.inventoryList.innerHTML = '';
+                if (this.gameState.player.inventory.length === 0) {
+                    this.elements.inventoryList.innerHTML = '<li>Empty</li>';
+                } else {
+                    this.gameState.player.inventory.forEach(item => {
+                        const li = document.createElement('li');
+                        li.textContent = '• ' + item;
+                        this.elements.inventoryList.appendChild(li);
+                    });
+                }
+            }
+
+            showGameText(storyNode) {
+                const textElement = this.elements.gameText;
+                const choicesElement = this.elements.gameChoices;
+                
+                // Clear previous content
+                textElement.textContent = '';
+                choicesElement.innerHTML = '';
+                
+                // Typewriter effect based on text speed
+                const speed = this.gameState.settings.textSpeed;
+                const delay = speed === 'fast' ? 15 : speed === 'slow' ? 50 : 30;
+                
+                let i = 0;
+                const typeWriter = () => {
+                    if (i < storyNode.text.length) {
+                        textElement.textContent += storyNode.text.charAt(i);
+                        i++;
+                        textElement.scrollTop = textElement.scrollHeight;
+                        setTimeout(typeWriter, delay);
+                    } else {
+                        // Show choices after text is complete
+                        storyNode.choices.forEach((choice, index) => {
+                            const button = document.createElement('button');
+                            button.className = 'choice-btn';
+                            button.textContent = `${index + 1}. ${choice.text}`;
+                            button.addEventListener('click', () => this.makeChoice(choice));
+                            choicesElement.appendChild(button);
+                        });
+                    }
+                };
+                
+                typeWriter();
+            }
+
+            makeChoice(choice) {
+                // Add decision to history
+                this.gameState.gameProgress.decisions.push({
+                    chapter: this.gameState.gameProgress.currentChapter,
+                    choice: choice.text
+                });
+                
+                // Handle special game events based on choices
+                this.handleSpecialEvents(choice);
+                
+                // Move to next chapter
+                if (gameStory[choice.next]) {
+                    this.gameState.gameProgress.currentChapter = choice.next;
+                    this.showGameText(gameStory[choice.next]);
+                } else {
+                    // Fallback
+                    const fallbackText = {
+                        text: "You continue your journey through the Darkwood Forest. The path ahead is still shrouded in mystery...\n\n(More content coming soon!)",
+                        choices: [
+                            { text: "Continue exploring", next: 'start' }
+                        ]
+                    };
+                    this.showGameText(fallbackText);
+                }
+                
+                this.updatePlayerStats();
+                this.autoSave();
+            }
+
+            handleSpecialEvents(choice) {
+                // Handle inventory changes based on choices
+                if (choice.next === 'searchArea') {
+                    this.addToInventory(['Rusty Dagger', 'Mysterious Parchment', '3 Gold Coins', 'Healing Potion']);
+                } else if (choice.next === 'openChestWithKey') {
+                    this.addToInventory(['Silver Amulet', 'Healing Potion']);
+                } else if (choice.next === 'findKey') {
+                    this.addToInventory(['Rusty Iron Key']);
+                } else if (choice.next === 'acceptTea') {
+                    this.gameState.player.health = Math.min(100, this.gameState.player.health + 20);
+                } else if (choice.next === 'restInCabin') {
+                    this.gameState.player.health = Math.min(100, this.gameState.player.health + 30);
+                } else if (choice.next === 'cabinBack') {
+                    this.gameState.player.health = Math.min(100, this.gameState.player.health + 10);
+                } else if (choice.next === 'searchSupplies') {
+                    this.addToInventory(['Dried Meat', 'Water Flask', 'Bandages']);
+                }
+            }
+
+            addToInventory(items) {
+                items.forEach(item => {
+                    if (!this.gameState.player.inventory.includes(item)) {
+                        this.gameState.player.inventory.push(item);
+                    }
+                });
+            }
+
+            autoSave() {
+                this.gameState.saveGame();
+                this.updateContinueButton();
+            }
+
+            handlePlayerInput() {
+                const input = document.getElementById('player-input');
+                const command = input.value.trim().toLowerCase();
+                input.value = '';
+                
+                if (command) {
+                    this.processCommand(command);
+                }
+            }
+
+            processCommand(command) {
+                const textElement = this.elements.gameText;
+                
+                // Command processing
+                if (command.includes('look') || command.includes('examine')) {
+                    textElement.textContent += '\n\n> You look around carefully, taking in your surroundings.';
+                } else if (command.includes('inventory') || command.includes('bag')) {
+                    const inv = this.gameState.player.inventory;
+                    textElement.textContent += '\n\n> Inventory: ' + (inv.length > 0 ? inv.join(', ') : 'Empty');
+                } else if (command.includes('health') || command.includes('hp')) {
+                    textElement.textContent += `\n\n> Health: ${this.gameState.player.health}/100`;
+                } else if (command.includes('help')) {
+                    textElement.textContent += '\n\n> Available commands: look, inventory, health, help';
+                } else if (command.includes('save')) {
+                    this.saveGame();
+                    textElement.textContent += '\n\n> Game saved!';
+                } else if (command.includes('load')) {
+                    if (this.gameState.hasSaveData()) {
+                        this.continueGame();
+                    } else {
+                        textElement.textContent += '\n\n> No save data found.';
+                    }
+                } else {
+                    textElement.textContent += `\n\n> "${command}" - Nothing happens. Type "help" for available commands.`;
+                }
+                
+                // Scroll to bottom
+                textElement.scrollTop = textElement.scrollHeight;
+            }
+
+            showNotification(message) {
+                // Remove existing notifications
+                document.querySelectorAll('.notification').forEach(n => n.remove());
+                
+                const notification = document.createElement('div');
+                notification.className = 'notification';
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.animation = 'slideOut 0.3s ease';
+                    setTimeout(() => notification.remove(), 300);
+                }, 2000);
+            }
+        }
+
+        // ============ INITIALIZE GAME ============
+        const gameState = new GameState();
+        const uiManager = new UIManager(gameState);
+
+        console.log('Darkwood Chronicles - Text Adventure Game');
+        console.log('Ready to play! Click "Play" to start your adventure.');
+        console.log('Tip: You can type commands like "look", "inventory", "health", or "help" in the game!');
+    </script>
 </body>
 </html>
