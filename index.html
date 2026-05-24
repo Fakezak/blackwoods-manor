@@ -1,2080 +1,2357 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Darkwood Chronicles - 3D Horror</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Courier New', monospace;
-            background: #0a0a0a;
-            color: #e0e0e0;
-            height: 100vh;
-            overflow: hidden;
-            user-select: none;
-        }
-
-        .screen {
-            display: none;
-            height: 100vh;
-            width: 100vw;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
-        .screen.active {
-            display: flex;
-        }
-
-        /* Main Menu */
-        .menu-container {
-            width: 100%;
-            height: 100%;
-            background-image: url('https://kommodo.ai/i/ouFPT0Zb7uzB4fTeS9dT');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-color: #050505;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .menu-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.75);
-            z-index: 1;
-        }
-
-        .menu-background {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            background: rgba(0, 0, 0, 0.85);
-            padding: 60px 80px;
-            border-radius: 15px;
-            border: 2px solid #4a4a4a;
-            box-shadow: 0 0 40px rgba(139, 0, 0, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5);
-            animation: pulse-border 4s ease-in-out infinite;
-        }
-
-        @keyframes pulse-border {
-            0%, 100% { border-color: #4a4a4a; box-shadow: 0 0 40px rgba(139, 0, 0, 0.3); }
-            50% { border-color: #8b0000; box-shadow: 0 0 60px rgba(139, 0, 0, 0.6); }
-        }
-
-        .game-title {
-            font-size: 4em;
-            color: #c9a959;
-            text-shadow: 0 0 20px rgba(139, 0, 0, 0.8), 3px 3px 6px rgba(0, 0, 0, 0.9);
-            margin-bottom: 10px;
-            letter-spacing: 4px;
-            animation: flicker 3s ease-in-out infinite alternate;
-        }
-
-        @keyframes flicker {
-            0%, 100% { opacity: 1; }
-            41% { opacity: 1; }
-            42% { opacity: 0.8; }
-            43% { opacity: 1; }
-            45% { opacity: 0.3; }
-            46% { opacity: 1; }
-        }
-
-        .game-subtitle {
-            font-size: 1.2em;
-            color: #8a8a8a;
-            margin-bottom: 50px;
-            text-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
-        }
-
-        .menu-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .menu-btn {
-            width: 280px;
-            padding: 15px 30px;
-            font-size: 1.2em;
-            background: linear-gradient(135deg, #1a0a0a, #2a0a0a);
-            color: #c9a959;
-            border: 2px solid #8b0000;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(139, 0, 0, 0.5);
-        }
-
-        .menu-btn:hover {
-            background: linear-gradient(135deg, #8b0000, #4a0000);
-            color: #fff;
-            transform: scale(1.05);
-            box-shadow: 0 0 30px rgba(139, 0, 0, 0.7);
-            border-color: #ff0000;
-        }
-
-        .menu-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            pointer-events: none;
-            border-color: #333;
-        }
-
-        .version-text {
-            margin-top: 40px;
-            color: #444;
-            font-size: 0.9em;
-        }
-
-        /* Settings */
-        .settings-container {
-            width: 100%;
-            max-width: 600px;
-            margin: auto;
-            background: rgba(5, 5, 5, 0.95);
-            padding: 40px;
-            border-radius: 15px;
-            border: 2px solid #4a4a4a;
-            box-shadow: 0 0 30px rgba(139, 0, 0, 0.2);
-        }
-
-        .settings-container h2 {
-            color: #c9a959;
-            text-align: center;
-            font-size: 2em;
-            margin-bottom: 40px;
-            text-shadow: 0 0 15px rgba(139, 0, 0, 0.5);
-        }
-
-        .setting-item {
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .setting-item label {
-            color: #e0e0e0;
-            font-size: 1.1em;
-        }
-
-        .setting-item input[type="range"] {
-            width: 200px;
-            accent-color: #8b0000;
-        }
-
-        .setting-item select {
-            padding: 8px 15px;
-            background: #1a0a0a;
-            color: #e0e0e0;
-            border: 1px solid #4a4a4a;
-            border-radius: 5px;
-            font-family: 'Courier New', monospace;
-        }
-
-        .value-display {
-            color: #c9a959;
-            min-width: 50px;
-            text-align: center;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #2a0a0a;
-            transition: .4s;
-            border-radius: 34px;
-            border: 1px solid #4a4a4a;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: #8b0000;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background-color: #3a0a0a;
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(26px);
-            background-color: #ff0000;
-        }
-
-        .danger-btn {
-            padding: 8px 20px;
-            background: #3a0a0a;
-            color: #ff6b6b;
-            border: 1px solid #ff6b6b;
-            border-radius: 5px;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-            transition: all 0.3s ease;
-        }
-
-        .danger-btn:hover {
-            background: #ff6b6b;
-            color: #1a1a1a;
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
-        }
-
-        /* Game Screen */
-        #game-screen {
-            background: #000;
-            padding: 0;
-            gap: 0;
-            flex-direction: column;
-        }
-
-        #game-canvas-container {
-            position: relative;
-            width: 100%;
-            height: 65%;
-            background: #000;
-            overflow: hidden;
-        }
-
-        #game-canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-
-        .vignette-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.8) 100%);
-            z-index: 10;
-        }
-
-        .noise-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            opacity: 0.03;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-            z-index: 11;
-        }
-
-        .flashlight-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), transparent 0%, transparent 80px, rgba(0,0,0,0.95) 200px);
-            z-index: 12;
-            transition: background 0.1s ease;
-        }
-
-        .game-ui-panel {
-            height: 35%;
-            background: linear-gradient(180deg, #0a0a0a 0%, #1a0a0a 100%);
-            border-top: 2px solid #8b0000;
-            display: flex;
-            flex-direction: column;
-            padding: 15px 20px;
-            gap: 10px;
-            box-shadow: 0 -10px 30px rgba(139, 0, 0, 0.2);
-        }
-
-        .game-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #2a0a0a;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .player-stats {
-            display: flex;
-            gap: 25px;
-            color: #c9a959;
-            font-size: 1em;
-            flex-wrap: wrap;
-        }
-
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .health-bar {
-            width: 100px;
-            height: 12px;
-            background: #2a0a0a;
-            border: 1px solid #4a0a0a;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .health-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #8b0000, #ff0000);
-            transition: width 0.5s ease;
-            width: 100%;
-        }
-
-        .sanity-bar {
-            width: 100px;
-            height: 12px;
-            background: #0a0a2a;
-            border: 1px solid #1a1a4a;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .sanity-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4a0080, #8000ff);
-            transition: width 0.5s ease;
-            width: 100%;
-        }
-
-        .small-btn {
-            padding: 6px 16px;
-            background: #1a0a0a;
-            color: #c9a959;
-            border: 1px solid #8b0000;
-            border-radius: 5px;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            transition: all 0.3s ease;
-        }
-
-        .small-btn:hover {
-            background: #8b0000;
-            color: #fff;
-            box-shadow: 0 0 15px rgba(139, 0, 0, 0.5);
-        }
-
-        .game-text {
-            flex: 1;
-            color: #d0d0d0;
-            font-size: 1em;
-            line-height: 1.6;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 5px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            border: 1px solid #2a0a0a;
-        }
-
-        .game-choices {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 120px;
-            overflow-y: auto;
-        }
-
-        .choice-btn {
-            padding: 10px 16px;
-            background: linear-gradient(90deg, #1a0a0a, #2a0a0a);
-            color: #c9a959;
-            border: 1px solid #4a0a0a;
-            border-radius: 5px;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-            text-align: left;
-            transition: all 0.3s ease;
-            font-size: 0.95em;
-        }
-
-        .choice-btn:hover {
-            background: linear-gradient(90deg, #3a0a0a, #4a0a0a);
-            border-color: #8b0000;
-            transform: translateX(8px);
-            box-shadow: 0 0 15px rgba(139, 0, 0, 0.3);
-            color: #fff;
-        }
-
-        .game-input-area {
-            display: flex;
-            gap: 10px;
-        }
-
-        #player-input {
-            flex: 1;
-            padding: 10px;
-            background: #0a0a0a;
-            border: 1px solid #4a0a0a;
-            color: #e0e0e0;
-            border-radius: 5px;
-            font-family: 'Courier New', monospace;
-            font-size: 1em;
-        }
-
-        #player-input:focus {
-            outline: none;
-            border-color: #8b0000;
-            box-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
-        }
-
-        #submit-input {
-            padding: 10px 20px;
-            background: #2a0a0a;
-            color: #c9a959;
-            border: 1px solid #8b0000;
-            border-radius: 5px;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-            transition: all 0.3s ease;
-        }
-
-        #submit-input:hover {
-            background: #8b0000;
-            color: #fff;
-        }
-
-        .inventory-panel {
-            position: absolute;
-            right: 20px;
-            top: 20px;
-            width: 200px;
-            background: rgba(5, 5, 5, 0.9);
-            border-radius: 10px;
-            padding: 15px;
-            border: 1px solid #8b0000;
-            z-index: 20;
-            backdrop-filter: blur(5px);
-        }
-
-        .inventory-panel h3 {
-            color: #c9a959;
-            text-align: center;
-            margin-bottom: 15px;
-            font-size: 1.1em;
-            border-bottom: 1px solid #2a0a0a;
-            padding-bottom: 8px;
-        }
-
-        #inventory-list {
-            list-style: none;
-            color: #d0d0d0;
-            font-size: 0.85em;
-        }
-
-        #inventory-list li {
-            padding: 6px;
-            margin-bottom: 4px;
-            background: rgba(42, 10, 10, 0.5);
-            border-radius: 3px;
-            border-left: 2px solid #8b0000;
-        }
-
-        /* Notification */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(10, 0, 0, 0.95);
-            color: #c9a959;
-            padding: 15px 25px;
-            border: 1px solid #8b0000;
-            border-radius: 5px;
-            z-index: 1000;
-            animation: slideIn 0.3s ease;
-            box-shadow: 0 0 20px rgba(139, 0, 0, 0.5);
-        }
-
-        /* Horror Effects */
-        .blood-splatter {
-            position: fixed;
-            pointer-events: none;
-            z-index: 999;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
-        .blood-splatter.active {
-            opacity: 0.7;
-        }
-
-        .screen-shake {
-            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-        }
-
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
-        }
-
-        .heartbeat {
-            animation: heartbeat 2s ease-in-out infinite;
-        }
-
-        @keyframes heartbeat {
-            0%, 100% { transform: scale(1); }
-            10% { transform: scale(1.05); }
-            20% { transform: scale(1); }
-            30% { transform: scale(1.05); }
-            40% { transform: scale(1); }
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #0a0a0a;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #4a0a0a;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #8b0000;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .menu-background {
-                padding: 40px 30px;
-                margin: 20px;
-            }
-            .game-title { font-size: 2.5em; }
-            .menu-btn { width: 220px; padding: 12px 25px; font-size: 1em; }
-            .inventory-panel { width: 150px; right: 10px; top: 10px; }
-            .player-stats { font-size: 0.85em; gap: 15px; }
-            .health-bar, .sanity-bar { width: 70px; }
-        }
-
-        @media (max-width: 480px) {
-            .game-title { font-size: 2em; }
-            .game-subtitle { font-size: 1em; }
-            .menu-background { padding: 30px 20px; }
-            .inventory-panel { display: none; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DARKWOOD - First Person Horror</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Courier New', monospace;
+  background: #000;
+  color: #e0e0e0;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  cursor: none;
+}
+#canvas-container {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 1;
+}
+#game-canvas { display: block; width: 100%; height: 100%; }
+
+/* UI Overlay */
+#ui-layer {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Crosshair */
+#crosshair {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 20px; height: 20px;
+  transform: translate(-50%, -50%);
+  opacity: 0.4;
+}
+#crosshair::before, #crosshair::after {
+  content: '';
+  position: absolute;
+  background: #8b0000;
+}
+#crosshair::before { top: 9px; left: 0; width: 20px; height: 2px; }
+#crosshair::after { top: 0; left: 9px; width: 2px; height: 20px; }
+
+/* Bars */
+#hud-bars {
+  position: absolute;
+  bottom: 30px; left: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bar-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.75em;
+  color: #aaa;
+  text-shadow: 0 0 5px #000;
+}
+.bar-label { width: 60px; text-align: right; }
+.bar-outer {
+  width: 150px; height: 14px;
+  background: rgba(0,0,0,0.7);
+  border: 1px solid #333;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+  border-radius: 2px;
+}
+#health-fill { background: linear-gradient(90deg, #500, #f00); width: 100%; }
+#sanity-fill { background: linear-gradient(90deg, #408, #a0f); width: 100%; }
+#stamina-fill { background: linear-gradient(90deg, #060, #0f0); width: 100%; }
+#battery-fill { background: linear-gradient(90deg, #440, #fa0); width: 100%; }
+
+/* Interaction prompt */
+#interaction-prompt {
+  position: absolute;
+  bottom: 120px; left: 50%;
+  transform: translateX(-50%);
+  color: #c9a959;
+  font-size: 1em;
+  text-shadow: 0 0 10px #000;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* Damage overlay */
+#damage-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: radial-gradient(circle, transparent 50%, rgba(255,0,0,0.4) 100%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+/* Jump scare flash */
+#jumpscare-flash {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Monster face overlay for jump scares */
+#monster-face {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: none;
+  z-index: 99;
+  background: #000;
+}
+#monster-face-canvas {
+  width: 100%; height: 100%;
+}
+
+/* Vignette */
+#vignette {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.85) 100%);
+  pointer-events: none;
+}
+
+/* Noise */
+#noise {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  opacity: 0.04;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Title Screen */
+#title-screen {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: url('https://kommodo.ai/i/ouFPT0Zb7uzB4fTeS9dT') center/cover no-repeat #050505;
+}
+#title-screen::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7);
+}
+#title-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+#game-title {
+  font-size: 5em;
+  color: #c9a959;
+  text-shadow: 0 0 30px rgba(139,0,0,0.8), 0 0 60px rgba(0,0,0,0.9);
+  letter-spacing: 8px;
+  margin-bottom: 10px;
+  animation: title-flicker 4s infinite alternate;
+}
+@keyframes title-flicker {
+  0%,100% { opacity: 1; }
+  45% { opacity: 1; }
+  46% { opacity: 0.3; }
+  47% { opacity: 1; }
+  48% { opacity: 0.5; }
+  49% { opacity: 1; }
+}
+#game-subtitle {
+  font-size: 1.3em;
+  color: #666;
+  margin-bottom: 60px;
+  letter-spacing: 4px;
+}
+.title-btn {
+  width: 300px;
+  padding: 18px;
+  margin: 12px;
+  font-size: 1.2em;
+  background: linear-gradient(135deg, #1a0505, #2a0a0a);
+  color: #c9a959;
+  border: 2px solid #8b0000;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 3px;
+  transition: all 0.3s;
+  position: relative;
+  z-index: 2;
+}
+.title-btn:hover {
+  background: #8b0000;
+  color: #fff;
+  box-shadow: 0 0 40px rgba(139,0,0,0.6);
+  transform: scale(1.05);
+}
+.title-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* Game Over Screen */
+#gameover-screen {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 2000;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+#gameover-text {
+  font-size: 4em;
+  color: #8b0000;
+  text-shadow: 0 0 20px #f00;
+  margin-bottom: 30px;
+  animation: blood-drip 3s ease-in-out;
+}
+@keyframes blood-drip {
+  0% { transform: translateY(-50px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+#gameover-reason {
+  font-size: 1.2em;
+  color: #666;
+  margin-bottom: 40px;
+}
+
+/* Subtitles for voice */
+#subtitles {
+  position: absolute;
+  bottom: 160px; left: 50%;
+  transform: translateX(-50%);
+  color: #c9a959;
+  font-size: 1.1em;
+  text-shadow: 0 0 10px #000, 0 0 20px #000;
+  text-align: center;
+  max-width: 80%;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+/* Objective marker */
+#objective {
+  position: absolute;
+  top: 30px; left: 50%;
+  transform: translateX(-50%);
+  color: #8b0000;
+  font-size: 0.9em;
+  text-shadow: 0 0 10px #000;
+  letter-spacing: 2px;
+  opacity: 0.8;
+}
+
+/* Inventory quick view */
+#quick-inventory {
+  position: absolute;
+  top: 30px; right: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-end;
+}
+.inv-item {
+  background: rgba(0,0,0,0.6);
+  border: 1px solid #4a0a0a;
+  padding: 4px 10px;
+  font-size: 0.7em;
+  color: #c9a959;
+  border-radius: 2px;
+}
+
+/* Death cam overlay */
+#death-cam {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: none;
+  z-index: 50;
+}
+
+/* Settings */
+#settings-panel {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(5,5,5,0.95);
+  border: 2px solid #8b0000;
+  padding: 30px 40px;
+  border-radius: 8px;
+  z-index: 3000;
+  display: none;
+  min-width: 400px;
+}
+#settings-panel h2 {
+  color: #c9a959;
+  text-align: center;
+  margin-bottom: 25px;
+}
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  color: #aaa;
+  font-size: 0.9em;
+}
+.setting-row input[type="range"] {
+  width: 150px;
+  accent-color: #8b0000;
+}
+
+/* Loading */
+#loading {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #000;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: #8b0000;
+  font-size: 1.2em;
+}
+#loading-bar {
+  width: 300px; height: 4px;
+  background: #1a0a0a;
+  margin-top: 20px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+#loading-fill {
+  width: 0%; height: 100%;
+  background: #8b0000;
+  transition: width 0.3s;
+}
+
+/* Screen shake class */
+.shake {
+  animation: shake-cam 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes shake-cam {
+  10%,90% { transform: translate3d(-2px,1px,0); }
+  20%,80% { transform: translate3d(4px,-2px,0); }
+  30%,50%,70% { transform: translate3d(-6px,3px,0); }
+  40%,60% { transform: translate3d(6px,-3px,0); }
+}
+
+/* Flashlight battery low warning */
+.battery-low { animation: battery-pulse 1s infinite; }
+@keyframes battery-pulse {
+  0%,100% { border-color: #fa0; }
+  50% { border-color: #f00; }
+}
+
+/* Sanity low effect */
+.sanity-low {
+  filter: contrast(1.2) saturate(0.3) hue-rotate(280deg);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  #game-title { font-size: 3em; }
+  .title-btn { width: 250px; padding: 14px; }
+  .bar-outer { width: 100px; }
+}
+</style>
 <base target="_blank">
 </head>
 <body>
-    <!-- Main Menu Screen -->
-    <div id="main-menu" class="screen active">
-        <div class="menu-container">
-            <div class="menu-overlay"></div>
-            <div class="menu-background">
-                <h1 class="game-title">Darkwood Chronicles</h1>
-                <p class="game-subtitle">A 3D Horror Experience</p>
 
-                <div class="menu-buttons">
-                    <button id="play-btn" class="menu-btn">Enter the Darkness</button>
-                    <button id="continue-btn" class="menu-btn">Continue Nightmare</button>
-                    <button id="settings-btn" class="menu-btn">Settings</button>
-                </div>
+<!-- Loading -->
+<div id="loading">
+  <div>Entering the Darkwood...</div>
+  <div id="loading-bar"><div id="loading-fill"></div></div>
+</div>
 
-                <div class="version-text">v2.0.0 - Horror Edition</div>
-            </div>
-        </div>
+<!-- Title Screen -->
+<div id="title-screen">
+  <div id="title-content">
+    <h1 id="game-title">DARKWOOD</h1>
+    <p id="game-subtitle">FIRST PERSON HORROR</p>
+    <button class="title-btn" id="btn-start">ENTER THE FOREST</button>
+    <button class="title-btn" id="btn-continue">CONTINUE</button>
+    <button class="title-btn" id="btn-settings">SETTINGS</button>
+  </div>
+</div>
+
+<!-- Settings -->
+<div id="settings-panel">
+  <h2>SETTINGS</h2>
+  <div class="setting-row">
+    <label>Mouse Sensitivity</label>
+    <input type="range" id="sens-slider" min="1" max="10" value="5">
+  </div>
+  <div class="setting-row">
+    <label>Master Volume</label>
+    <input type="range" id="vol-slider" min="0" max="100" value="70">
+  </div>
+  <div class="setting-row">
+    <label>Voice Narration</label>
+    <input type="range" id="voice-slider" min="0" max="100" value="80">
+  </div>
+  <div class="setting-row">
+    <label>Jump Scare Intensity</label>
+    <input type="range" id="jumpscare-slider" min="0" max="100" value="100">
+  </div>
+  <button class="title-btn" id="btn-close-settings" style="width:100%;margin-top:15px;">CLOSE</button>
+</div>
+
+<!-- Game Over -->
+<div id="gameover-screen">
+  <div id="gameover-text">YOU DIED</div>
+  <div id="gameover-reason">The forest has claimed you.</div>
+  <button class="title-btn" id="btn-retry">TRY AGAIN</button>
+  <button class="title-btn" id="btn-menu">MAIN MENU</button>
+</div>
+
+<!-- 3D Canvas -->
+<div id="canvas-container">
+  <canvas id="game-canvas"></canvas>
+</div>
+
+<!-- UI Layer -->
+<div id="ui-layer">
+  <div id="vignette"></div>
+  <div id="noise"></div>
+  <div id="damage-overlay"></div>
+  <div id="jumpscare-flash"></div>
+  <div id="monster-face"><canvas id="monster-face-canvas"></canvas></div>
+  <div id="death-cam"></div>
+
+  <div id="crosshair"></div>
+
+  <div id="objective">FIND THE CABIN</div>
+
+  <div id="quick-inventory"></div>
+
+  <div id="hud-bars">
+    <div class="bar-container">
+      <span class="bar-label">HEALTH</span>
+      <div class="bar-outer"><div class="bar-fill" id="health-fill"></div></div>
     </div>
-
-    <!-- Settings Screen -->
-    <div id="settings-screen" class="screen">
-        <div class="settings-container">
-            <h2>⚙️ Settings</h2>
-
-            <div class="setting-item">
-                <label>🎵 Music Volume</label>
-                <input type="range" id="music-volume" min="0" max="100" value="50">
-                <span class="value-display" id="music-value">50%</span>
-            </div>
-
-            <div class="setting-item">
-                <label>🔊 Sound Effects</label>
-                <input type="range" id="sfx-volume" min="0" max="100" value="70">
-                <span class="value-display" id="sfx-value">70%</span>
-            </div>
-
-            <div class="setting-item">
-                <label>📝 Text Speed</label>
-                <select id="text-speed">
-                    <option value="slow">Slow</option>
-                    <option value="normal" selected>Normal</option>
-                    <option value="fast">Fast</option>
-                </select>
-            </div>
-
-            <div class="setting-item">
-                <label>🔦 Flashlight Mode</label>
-                <label class="switch">
-                    <input type="checkbox" id="flashlight-mode" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="setting-item">
-                <label>🗑️ Delete Save Data</label>
-                <button id="delete-save" class="danger-btn">Delete</button>
-            </div>
-
-            <button id="back-to-menu" class="menu-btn" style="width: 100%; margin-top: 20px;">Back to Menu</button>
-        </div>
+    <div class="bar-container">
+      <span class="bar-label">SANITY</span>
+      <div class="bar-outer"><div class="bar-fill" id="sanity-fill"></div></div>
     </div>
-
-    <!-- Game Screen -->
-    <div id="game-screen" class="screen">
-        <div id="game-canvas-container">
-            <canvas id="game-canvas"></canvas>
-            <div class="vignette-overlay"></div>
-            <div class="noise-overlay"></div>
-            <div class="flashlight-overlay" id="flashlight"></div>
-
-            <div class="inventory-panel">
-                <h3>🎒 Inventory</h3>
-                <ul id="inventory-list">
-                    <li>Empty</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="game-ui-panel">
-            <div class="game-header">
-                <div class="player-stats">
-                    <span class="stat-item">🏰 <span id="location-name">Darkwood Forest</span></span>
-                    <span class="stat-item">❤️ 
-                        <div class="health-bar"><div class="health-fill" id="health-bar"></div></div>
-                        <span id="health">100</span>
-                    </span>
-                    <span class="stat-item">🧠 
-                        <div class="sanity-bar"><div class="sanity-fill" id="sanity-bar"></div></div>
-                        <span id="sanity">100</span>
-                    </span>
-                    <span class="stat-item">⭐ Level: <span id="level">1</span></span>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <button id="save-game-btn" class="small-btn">💾 Save</button>
-                    <button id="return-to-menu" class="small-btn">🏠 Menu</button>
-                </div>
-            </div>
-
-            <div id="game-text" class="game-text">
-                Welcome to Darkwood Chronicles...
-            </div>
-
-            <div id="game-choices" class="game-choices"></div>
-
-            <div class="game-input-area">
-                <input type="text" id="player-input" placeholder="Type your action... (try 'help')">
-                <button id="submit-input">Submit</button>
-            </div>
-        </div>
+    <div class="bar-container">
+      <span class="bar-label">STAMINA</span>
+      <div class="bar-outer"><div class="bar-fill" id="stamina-fill"></div></div>
     </div>
+    <div class="bar-container">
+      <span class="bar-label">FLASHLIGHT</span>
+      <div class="bar-outer" id="battery-outer"><div class="bar-fill" id="battery-fill"></div></div>
+    </div>
+  </div>
 
-    <script>
+  <div id="interaction-prompt">[E] OPEN DOOR</div>
+  <div id="subtitles"></div>
+</div>
 
-        // ============ 3D HORROR ENGINE ============
-        class Horror3DEngine {
-            constructor() {
-                this.scene = null;
-                this.camera = null;
-                this.renderer = null;
-                this.clock = new THREE.Clock();
-                this.objects = [];
-                this.particles = null;
-                this.ghostObjects = [];
-                this.isRunning = false;
-                this.mouseX = 0;
-                this.mouseY = 0;
-                this.canvas = document.getElementById('game-canvas');
-                this.container = document.getElementById('game-canvas-container');
-            }
+<script>
 
-            init() {
-                this.scene = new THREE.Scene();
-                this.scene.background = new THREE.Color(0x050505);
-                this.scene.fog = new THREE.FogExp2(0x0a0a0a, 0.035);
+// ============ AUDIO MANAGER ============
+class AudioManager {
+  constructor() {
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.masterGain = this.ctx.createGain();
+    this.masterGain.connect(this.ctx.destination);
+    this.masterGain.gain.value = 0.7;
+    this.sounds = {};
+    this.voiceEnabled = true;
+    this.voiceVolume = 0.8;
+    this.proceduralSounds = {};
+  }
 
-                this.camera = new THREE.PerspectiveCamera(75, this.container.clientWidth / this.container.clientHeight, 0.1, 1000);
-                this.camera.position.set(0, 1.6, 5);
+  playTone(freq, duration, type='sine', vol=0.3, fade=true) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+    if (fade) {
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+    }
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start();
+    osc.stop(this.ctx.currentTime + duration);
+    return { osc, gain };
+  }
 
-                this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
-                this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                this.renderer.shadowMap.enabled = true;
-                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  playNoise(duration, vol=0.2) {
+    const bufferSize = this.ctx.sampleRate * duration;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+    noise.connect(gain);
+    gain.connect(this.masterGain);
+    noise.start();
+    noise.stop(this.ctx.currentTime + duration);
+  }
 
-                this.setupHorrorLighting();
-                this.createEnvironment();
-                this.createParticles();
-                this.createGhostlyFigures();
+  startAmbientDrone() {
+    if (this.proceduralSounds.drone) return;
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc1.type = 'sawtooth';
+    osc2.type = 'sine';
+    osc1.frequency.setValueAtTime(40, this.ctx.currentTime);
+    osc2.frequency.setValueAtTime(42, this.ctx.currentTime);
+    gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(200, this.ctx.currentTime);
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+    osc1.start();
+    osc2.start();
+    this.proceduralSounds.drone = { osc1, osc2, gain, filter };
+  }
 
-                window.addEventListener('resize', () => this.onResize());
-                this.container.addEventListener('mousemove', (e) => this.onMouseMove(e));
+  stopAmbientDrone() {
+    if (this.proceduralSounds.drone) {
+      this.proceduralSounds.drone.osc1.stop();
+      this.proceduralSounds.drone.osc2.stop();
+      this.proceduralSounds.drone = null;
+    }
+  }
 
-                this.isRunning = true;
-                this.animate();
-            }
+  startHeartbeat(intensity=1) {
+    if (this.proceduralSounds.heartbeat) return;
+    const playBeat = () => {
+      if (!this.proceduralSounds.heartbeat) return;
+      const t = this.ctx.currentTime;
+      // Lub
+      const osc1 = this.ctx.createOscillator();
+      const g1 = this.ctx.createGain();
+      osc1.frequency.setValueAtTime(30, t);
+      g1.gain.setValueAtTime(0.3 * intensity, t);
+      g1.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+      osc1.connect(g1); g1.connect(this.masterGain);
+      osc1.start(t); osc1.stop(t + 0.1);
+      // Dub
+      const osc2 = this.ctx.createOscillator();
+      const g2 = this.ctx.createGain();
+      osc2.frequency.setValueAtTime(25, t + 0.15);
+      g2.gain.setValueAtTime(0.25 * intensity, t + 0.15);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      osc2.connect(g2); g2.connect(this.masterGain);
+      osc2.start(t + 0.15); osc2.stop(t + 0.25);
+      const interval = intensity > 1.5 ? 400 : intensity > 1 ? 600 : 800;
+      this.proceduralSounds.heartbeat.timer = setTimeout(playBeat, interval);
+    };
+    this.proceduralSounds.heartbeat = { timer: null };
+    playBeat();
+  }
 
-            setupHorrorLighting() {
-                const ambientLight = new THREE.AmbientLight(0x1a0505, 0.2);
-                this.scene.add(ambientLight);
+  stopHeartbeat() {
+    if (this.proceduralSounds.heartbeat) {
+      clearTimeout(this.proceduralSounds.heartbeat.timer);
+      this.proceduralSounds.heartbeat = null;
+    }
+  }
 
-                const moonLight = new THREE.DirectionalLight(0x4444aa, 0.3);
-                moonLight.position.set(10, 20, 10);
-                moonLight.castShadow = true;
-                this.scene.add(moonLight);
-                this.lights = [moonLight];
+  playFootstep(isRunning=false, isCrouch=false) {
+    const vol = isRunning ? 0.15 : isCrouch ? 0.05 : 0.1;
+    const dur = isRunning ? 0.08 : 0.12;
+    this.playNoise(dur, vol);
+    // Add a low thud
+    this.playTone(80 + Math.random()*40, dur, 'triangle', vol*0.5);
+  }
 
-                this.campfireLight = new THREE.PointLight(0xff4400, 1, 20);
-                this.campfireLight.position.set(0, 1, 0);
-                this.campfireLight.castShadow = true;
-                this.scene.add(this.campfireLight);
-                this.lights.push(this.campfireLight);
+  playScream() {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.3);
+    osc.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 1.5);
+    gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 1.5);
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(800, this.ctx.currentTime);
+    filter.Q.setValueAtTime(2, this.ctx.currentTime);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 1.5);
+    this.playNoise(1.5, 0.3);
+  }
 
-                this.ghostLight = new THREE.PointLight(0x6600ff, 0.5, 15);
-                this.ghostLight.position.set(-5, 2, -5);
-                this.scene.add(this.ghostLight);
-                this.lights.push(this.ghostLight);
-            }
+  playMonsterGrowl(dist=1) {
+    const vol = Math.max(0, 0.4 - dist * 0.05);
+    if (vol <= 0) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(60, this.ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(40, this.ctx.currentTime + 0.5);
+    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.8);
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(300, this.ctx.currentTime);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.8);
+  }
 
-            createEnvironment() {
-                const groundGeometry = new THREE.PlaneGeometry(100, 100, 64, 64);
-                const groundMaterial = new THREE.MeshStandardMaterial({
-                    color: 0x0a0a0a,
-                    roughness: 0.9,
-                    metalness: 0.1
-                });
+  playDoorCreak() {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 1.2);
+    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 1.2);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 1.2);
+  }
 
-                const positions = groundGeometry.attributes.position;
-                for (let i = 0; i < positions.count; i++) {
-                    const x = positions.getX(i);
-                    const y = positions.getY(i);
-                    const z = Math.sin(x * 0.1) * Math.cos(y * 0.1) * 0.5 + Math.random() * 0.2;
-                    positions.setZ(i, z);
-                }
-                groundGeometry.computeVertexNormals();
+  playJumpScareSound() {
+    // Loud noise burst
+    this.playNoise(0.5, 0.8);
+    this.playTone(200, 0.3, 'square', 0.6, false);
+    this.playTone(800, 0.5, 'sawtooth', 0.5);
+    // Scream layer
+    setTimeout(() => this.playScream(), 100);
+  }
 
-                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-                ground.rotation.x = -Math.PI / 2;
-                ground.receiveShadow = true;
-                this.scene.add(ground);
+  playWhisper() {
+    const phrases = [
+      { freq: 300, dur: 0.8 },
+      { freq: 250, dur: 0.6 },
+      { freq: 350, dur: 0.7 }
+    ];
+    const p = phrases[Math.floor(Math.random() * phrases.length)];
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(p.freq, this.ctx.currentTime);
+    gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + p.dur);
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(400, this.ctx.currentTime);
+    filter.Q.setValueAtTime(8, this.ctx.currentTime);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start();
+    osc.stop(this.ctx.currentTime + p.dur);
+  }
 
-                this.createTrees();
-                this.createDeadTrees();
-                this.createRocks();
-                this.createCabin();
-            }
+  speak(text, priority=false) {
+    if (!this.voiceEnabled || !window.speechSynthesis) return;
+    // Cancel existing if priority
+    if (priority) window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.75;
+    utter.pitch = 0.6;
+    utter.volume = this.voiceVolume;
+    // Try to find a dark/deep voice
+    const voices = window.speechSynthesis.getVoices();
+    const deepVoice = voices.find(v => v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('daniel') || v.name.toLowerCase().includes('david'));
+    if (deepVoice) utter.voice = deepVoice;
+    window.speechSynthesis.speak(utter);
+    // Show subtitles
+    const sub = document.getElementById('subtitles');
+    if (sub) {
+      sub.textContent = text;
+      sub.style.opacity = '1';
+      setTimeout(() => { sub.style.opacity = '0'; }, Math.max(3000, text.length * 80));
+    }
+  }
 
-            createTrees() {
-                const treeCount = 40;
-                for (let i = 0; i < treeCount; i++) {
-                    const height = 4 + Math.random() * 6;
-                    const radius = 0.3 + Math.random() * 0.5;
+  setMasterVolume(v) {
+    this.masterGain.gain.value = v / 100;
+  }
+}
 
-                    const trunkGeo = new THREE.CylinderGeometry(radius * 0.7, radius, height, 6);
-                    const trunkMat = new THREE.MeshStandardMaterial({
-                        color: 0x1a0a0a,
-                        roughness: 0.95,
-                        metalness: 0.0
-                    });
-                    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+// ============ JUMP SCARE MANAGER ============
+class JumpScareManager {
+  constructor(audio) {
+    this.audio = audio;
+    this.cooldown = 0;
+    this.intensity = 1.0;
+    this.canvas = document.getElementById('monster-face-canvas');
+    this.ctx2d = this.canvas.getContext('2d');
+    this.resizeFaceCanvas();
+    window.addEventListener('resize', () => this.resizeFaceCanvas());
+  }
 
-                    const angle = Math.random() * Math.PI * 2;
-                    const distance = 5 + Math.random() * 25;
-                    trunk.position.set(
-                        Math.cos(angle) * distance,
-                        height / 2,
-                        Math.sin(angle) * distance
-                    );
-                    trunk.castShadow = true;
-                    trunk.receiveShadow = true;
-                    trunk.rotation.z = (Math.random() - 0.5) * 0.1;
-                    trunk.rotation.x = (Math.random() - 0.5) * 0.1;
+  resizeFaceCanvas() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  }
 
-                    this.scene.add(trunk);
-                    this.objects.push(trunk);
-                }
-            }
+  drawMonsterFace() {
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const ctx = this.ctx2d;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, w, h);
 
-            createDeadTrees() {
-                for (let i = 0; i < 8; i++) {
-                    const height = 3 + Math.random() * 4;
-                    const trunkGeo = new THREE.CylinderGeometry(0.1, 0.3, height, 4);
-                    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a });
-                    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+    // Pale face
+    const faceW = w * 0.5;
+    const faceH = h * 0.7;
+    const fx = w/2 - faceW/2;
+    const fy = h/2 - faceH/2;
 
-                    const angle = Math.random() * Math.PI * 2;
-                    const distance = 6 + Math.random() * 15;
-                    trunk.position.set(
-                        Math.cos(angle) * distance,
-                        height / 2,
-                        Math.sin(angle) * distance
-                    );
+    ctx.fillStyle = '#e8e0d0';
+    ctx.beginPath();
+    ctx.ellipse(w/2, h/2, faceW/2, faceH/2, 0, 0, Math.PI*2);
+    ctx.fill();
 
-                    for (let j = 0; j < 3; j++) {
-                        const branchGeo = new THREE.CylinderGeometry(0.02, 0.05, 1 + Math.random(), 3);
-                        const branch = new THREE.Mesh(branchGeo, trunkMat);
-                        branch.position.set(0, height * 0.3 + j * 0.5, 0);
-                        branch.rotation.z = Math.random() * Math.PI;
-                        branch.rotation.x = Math.random() * Math.PI;
-                        trunk.add(branch);
-                    }
+    // Dark shadows on face
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(w/2 + faceW*0.15, h/2 + faceH*0.1, faceW*0.35, faceH*0.4, 0.2, 0, Math.PI*2);
+    ctx.fill();
 
-                    this.scene.add(trunk);
-                }
-            }
+    // Eyes - black voids
+    const eyeY = h/2 - faceH*0.08;
+    const eyeX1 = w/2 - faceW*0.18;
+    const eyeX2 = w/2 + faceW*0.18;
+    const eyeR = faceW * 0.12;
 
-            createRocks() {
-                for (let i = 0; i < 15; i++) {
-                    const size = 0.3 + Math.random() * 0.8;
-                    const rockGeo = new THREE.DodecahedronGeometry(size, 0);
-                    const rockMat = new THREE.MeshStandardMaterial({
-                        color: 0x111111,
-                        roughness: 0.9
-                    });
-                    const rock = new THREE.Mesh(rockGeo, rockMat);
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(eyeX1, eyeY, eyeR, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(eyeX2, eyeY, eyeR, 0, Math.PI*2); ctx.fill();
 
-                    const angle = Math.random() * Math.PI * 2;
-                    const distance = 3 + Math.random() * 20;
-                    rock.position.set(
-                        Math.cos(angle) * distance,
-                        size * 0.4,
-                        Math.sin(angle) * distance
-                    );
-                    rock.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-                    rock.castShadow = true;
+    // Eye glints
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(eyeX1 - eyeR*0.3, eyeY - eyeR*0.3, eyeR*0.15, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(eyeX2 - eyeR*0.3, eyeY - eyeR*0.3, eyeR*0.15, 0, Math.PI*2); ctx.fill();
 
-                    this.scene.add(rock);
-                }
-            }
+    // Veins around eyes
+    ctx.strokeStyle = 'rgba(139,0,0,0.4)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 8; i++) {
+      ctx.beginPath();
+      ctx.moveTo(eyeX1, eyeY);
+      ctx.quadraticCurveTo(eyeX1 - eyeR*(1+Math.random()), eyeY - eyeR*Math.random()*2, eyeX1 - eyeR*(1.5+Math.random()), eyeY - eyeR*(0.5+Math.random()));
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(eyeX2, eyeY);
+      ctx.quadraticCurveTo(eyeX2 + eyeR*(1+Math.random()), eyeY - eyeR*Math.random()*2, eyeX2 + eyeR*(1.5+Math.random()), eyeY - eyeR*(0.5+Math.random()));
+      ctx.stroke();
+    }
 
-            createCabin() {
-                const cabinGroup = new THREE.Group();
+    // Mouth - wide, too wide
+    const mouthY = h/2 + faceH*0.22;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.ellipse(w/2, mouthY, faceW*0.28, faceH*0.18, 0, 0, Math.PI*2);
+    ctx.fill();
 
-                const wallMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 0.9 });
-                const wallGeo = new THREE.BoxGeometry(4, 3, 4);
-                const walls = new THREE.Mesh(wallGeo, wallMat);
-                walls.position.y = 1.5;
-                walls.castShadow = true;
-                cabinGroup.add(walls);
+    // Teeth
+    ctx.fillStyle = '#ddd';
+    const teethCount = 12;
+    for (let i = 0; i < teethCount; i++) {
+      const tx = w/2 - faceW*0.25 + (faceW*0.5 * i/(teethCount-1));
+      const ty = mouthY - faceH*0.08 + Math.random()*5;
+      ctx.beginPath();
+      ctx.moveTo(tx - 4, ty);
+      ctx.lineTo(tx, ty + 15 + Math.random()*10);
+      ctx.lineTo(tx + 4, ty);
+      ctx.fill();
+    }
+    // Bottom teeth
+    for (let i = 0; i < teethCount; i++) {
+      const tx = w/2 - faceW*0.25 + (faceW*0.5 * i/(teethCount-1));
+      const ty = mouthY + faceH*0.08;
+      ctx.beginPath();
+      ctx.moveTo(tx - 4, ty);
+      ctx.lineTo(tx, ty - 12 - Math.random()*8);
+      ctx.lineTo(tx + 4, ty);
+      ctx.fill();
+    }
 
-                const roofGeo = new THREE.ConeGeometry(3.5, 2, 4);
-                const roofMat = new THREE.MeshStandardMaterial({ color: 0x1a0a0a });
-                const roof = new THREE.Mesh(roofGeo, roofMat);
-                roof.position.y = 3.5;
-                roof.rotation.y = Math.PI / 4;
-                cabinGroup.add(roof);
+    // Blood dripping from mouth
+    ctx.fillStyle = 'rgba(139,0,0,0.8)';
+    for (let i = 0; i < 5; i++) {
+      const bx = w/2 + (Math.random()-0.5)*faceW*0.3;
+      const by = mouthY + faceH*0.15;
+      const len = 20 + Math.random()*60;
+      ctx.beginPath();
+      ctx.ellipse(bx, by + len/2, 3 + Math.random()*3, len/2, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
 
-                const doorGeo = new THREE.BoxGeometry(1, 2, 0.1);
-                const doorMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a });
-                const door = new THREE.Mesh(doorGeo, doorMat);
-                door.position.set(0, 1, 2.05);
-                cabinGroup.add(door);
+  trigger(type='monster', duration=1.5) {
+    if (this.cooldown > 0) return;
+    this.cooldown = 4;
 
-                const windowGeo = new THREE.PlaneGeometry(0.8, 0.8);
-                const windowMat = new THREE.MeshBasicMaterial({ 
-                    color: 0xffaa00,
-                    transparent: true,
-                    opacity: 0.3
-                });
-                const window1 = new THREE.Mesh(windowGeo, windowMat);
-                window1.position.set(1.5, 1.8, 2.01);
-                cabinGroup.add(window1);
+    const flash = document.getElementById('jumpscare-flash');
+    const face = document.getElementById('monster-face');
+    const ui = document.getElementById('ui-layer');
 
-                cabinGroup.position.set(-8, 0, -10);
-                this.scene.add(cabinGroup);
-                this.cabin = cabinGroup;
-            }
+    this.audio.playJumpScareSound();
 
-            createParticles() {
-                const particleCount = 200;
-                const geometry = new THREE.BufferGeometry();
-                const positions = new Float32Array(particleCount * 3);
-                const velocities = [];
+    // Flash
+    flash.style.opacity = '1';
+    flash.style.transition = 'none';
 
-                for (let i = 0; i < particleCount; i++) {
-                    positions[i * 3] = (Math.random() - 0.5) * 40;
-                    positions[i * 3 + 1] = Math.random() * 10;
-                    positions[i * 3 + 2] = (Math.random() - 0.5) * 40;
+    // Screen shake
+    ui.classList.add('shake');
 
-                    velocities.push({
-                        x: (Math.random() - 0.5) * 0.01,
-                        y: Math.random() * 0.01,
-                        z: (Math.random() - 0.5) * 0.01
-                    });
-                }
+    if (type === 'monster') {
+      this.drawMonsterFace();
+      face.style.display = 'block';
+    }
 
-                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    // Flash off quickly then face lingers
+    setTimeout(() => {
+      flash.style.transition = 'opacity 0.1s';
+      flash.style.opacity = '0';
+    }, 50);
 
-                const material = new THREE.PointsMaterial({
-                    color: 0x6644aa,
-                    size: 0.05,
-                    transparent: true,
-                    opacity: 0.6,
-                    blending: THREE.AdditiveBlending
-                });
+    setTimeout(() => {
+      face.style.display = 'none';
+      ui.classList.remove('shake');
+    }, duration * 1000);
 
-                this.particles = new THREE.Points(geometry, material);
-                this.particles.userData = { velocities };
-                this.scene.add(this.particles);
-            }
+    // Damage sanity
+    return 25;
+  }
 
-            createGhostlyFigures() {
-                for (let i = 0; i < 3; i++) {
-                    const ghostGeo = new THREE.SphereGeometry(0.5, 8, 8);
-                    const ghostMat = new THREE.MeshBasicMaterial({
-                        color: 0x4400aa,
-                        transparent: true,
-                        opacity: 0.1
-                    });
-                    const ghost = new THREE.Mesh(ghostGeo, ghostMat);
+  triggerAmbient() {
+    // Subtle scare - no face, just sound and flash
+    if (this.cooldown > 0) return;
+    this.cooldown = 2;
+    const flash = document.getElementById('jumpscare-flash');
+    flash.style.background = '#8b0000';
+    flash.style.opacity = '0.3';
+    flash.style.transition = 'opacity 0.05s';
+    this.audio.playNoise(0.3, 0.2);
+    this.audio.playTone(150, 0.3, 'sawtooth', 0.2);
+    setTimeout(() => {
+      flash.style.opacity = '0';
+      flash.style.background = '#fff';
+    }, 100);
+    return 5;
+  }
 
-                    ghost.position.set(
-                        (Math.random() - 0.5) * 20,
-                        1 + Math.random(),
-                        (Math.random() - 0.5) * 20 - 10
-                    );
+  update(dt) {
+    if (this.cooldown > 0) this.cooldown -= dt;
+  }
+}
 
-                    ghost.userData = {
-                        originalY: ghost.position.y,
-                        speed: 0.5 + Math.random() * 0.5,
-                        offset: Math.random() * Math.PI * 2
-                    };
+// ============ INPUT MANAGER ============
+class InputManager {
+  constructor() {
+    this.keys = {};
+    this.mouse = { x: 0, y: 0, dx: 0, dy: 0, locked: false };
+    this.sensitivity = 0.002;
 
-                    this.scene.add(ghost);
-                    this.ghostObjects.push(ghost);
-                }
-            }
+    document.addEventListener('keydown', (e) => {
+      this.keys[e.code] = true;
+      if (e.code === 'Escape') this.unlockPointer();
+    });
+    document.addEventListener('keyup', (e) => this.keys[e.code] = false);
 
-            onMouseMove(e) {
-                const rect = this.container.getBoundingClientRect();
-                this.mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-                this.mouseY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    document.addEventListener('mousemove', (e) => {
+      if (this.mouse.locked) {
+        this.mouse.dx += e.movementX * this.sensitivity;
+        this.mouse.dy += e.movementY * this.sensitivity;
+      }
+    });
 
-                const flashlight = document.getElementById('flashlight');
-                if (flashlight && gameState.settings.flashlightMode) {
-                    const x = ((e.clientX - rect.left) / rect.width) * 100;
-                    const y = ((e.clientY - rect.top) / rect.height) * 100;
-                    flashlight.style.setProperty('--mouse-x', x + '%');
-                    flashlight.style.setProperty('--mouse-y', y + '%');
-                }
-            }
+    document.addEventListener('click', () => {
+      if (!this.mouse.locked && document.getElementById('game-screen').style.display !== 'none') {
+        this.lockPointer();
+      }
+    });
+  }
 
-            onResize() {
-                if (!this.camera || !this.renderer) return;
-                this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
-                this.camera.updateProjectionMatrix();
-                this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-            }
+  lockPointer() {
+    const canvas = document.getElementById('game-canvas');
+    canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock;
+    canvas.requestPointerLock();
+  }
 
-            updateParticles() {
-                if (!this.particles) return;
-                const positions = this.particles.geometry.attributes.position.array;
-                const velocities = this.particles.userData.velocities;
+  unlockPointer() {
+    document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
+    document.exitPointerLock();
+  }
 
-                for (let i = 0; i < velocities.length; i++) {
-                    positions[i * 3] += velocities[i].x;
-                    positions[i * 3 + 1] += velocities[i].y;
-                    positions[i * 3 + 2] += velocities[i].z;
+  isPressed(code) {
+    return !!this.keys[code];
+  }
 
-                    if (positions[i * 3 + 1] > 10) {
-                        positions[i * 3 + 1] = 0;
-                    }
-                }
+  getMouseDelta() {
+    const dx = this.mouse.dx;
+    const dy = this.mouse.dy;
+    this.mouse.dx = 0;
+    this.mouse.dy = 0;
+    return { dx, dy };
+  }
 
-                this.particles.geometry.attributes.position.needsUpdate = true;
-            }
+  setSensitivity(val) {
+    this.sensitivity = val * 0.0004;
+  }
+}
 
-            updateGhosts(time) {
-                this.ghostObjects.forEach((ghost, i) => {
-                    ghost.position.y = ghost.userData.originalY + Math.sin(time * ghost.userData.speed + ghost.userData.offset) * 0.5;
-                    ghost.material.opacity = 0.05 + Math.sin(time * 2 + i) * 0.05;
-                    ghost.rotation.y += 0.005;
-                });
-            }
+// ============ LEVEL DATA ============
+const LEVEL = {
+  walls: [],
+  floors: [],
+  ceilings: [],
+  doors: [],
+  items: [],
+  zones: {
+    forest: { monsters: ['stalker'], ambient: 'wind' },
+    cabin_exterior: { monsters: ['stalker'], ambient: 'wind' },
+    cabin_main: { monsters: ['crawler'], ambient: 'creak' },
+    cabin_bedroom: { monsters: ['crawler'], ambient: 'creak' },
+    basement: { monsters: ['crawler', 'stalker'], ambient: 'drip' },
+    cave: { monsters: ['watcher', 'stalker'], ambient: 'drip' },
+    oak: { monsters: ['watcher'], ambient: 'silence' }
+  }
+};
 
-            updateLights(time) {
-                this.campfireLight.intensity = 0.8 + Math.sin(time * 10) * 0.2 + Math.random() * 0.3;
-                this.campfireLight.color.setHSL(0.08 + Math.sin(time * 5) * 0.02, 1, 0.5);
+function buildLevel() {
+  const walls = [];
+  const floors = [];
+  const doors = [];
+  const items = [];
 
-                this.ghostLight.intensity = 0.3 + Math.sin(time * 2) * 0.2;
-                this.ghostLight.position.x = -5 + Math.sin(time * 0.5) * 2;
-            }
+  // Helper to add wall
+  function addWall(x, y, z, w, h, d, type='wall') {
+    walls.push({ x, y, z, w, h, d, type, bbox: new THREE.Box3(
+      new THREE.Vector3(x-w/2, y, z-d/2),
+      new THREE.Vector3(x+w/2, y+h, z+d/2)
+    )});
+  }
 
-            updateCamera(time) {
-                this.camera.position.y = 1.6 + Math.sin(time * 0.5) * 0.05;
-                this.camera.rotation.y = this.mouseX * 0.1;
-                this.camera.rotation.x = this.mouseY * 0.05;
-            }
+  // Helper to add floor
+  function addFloor(x, y, z, w, d) {
+    floors.push({ x, y, z, w, d, bbox: new THREE.Box3(
+      new THREE.Vector3(x-w/2, y-0.1, z-d/2),
+      new THREE.Vector3(x+w/2, y+0.1, z+d/2)
+    )});
+  }
 
-            animate() {
-                if (!this.isRunning) return;
-                requestAnimationFrame(() => this.animate());
+  // ===== FOREST (Starting area) =====
+  // Ground
+  addFloor(0, 0, 0, 80, 80);
+  // Forest boundary walls (invisible collision barriers)
+  addWall(0, 0, -40, 80, 5, 2, 'boundary');
+  addWall(0, 0, 40, 80, 5, 2, 'boundary');
+  addWall(-40, 0, 0, 2, 5, 80, 'boundary');
+  addWall(40, 0, 0, 2, 5, 80, 'boundary');
 
-                const time = this.clock.getElapsedTime();
+  // Trees (collision cylinders approximated as boxes)
+  const treePositions = [
+    [-15, -12], [-20, 5], [-8, -20], [12, -15], [18, 8],
+    [25, -5], [-25, 15], [5, 25], [-10, 18], [15, 20],
+    [-30, -8], [30, 12], [-5, -30], [8, -25], [-18, -5],
+    [22, 18], [-12, 22], [0, -18], [-22, -22], [10, 10]
+  ];
+  treePositions.forEach(([tx, tz]) => {
+    addWall(tx, 0, tz, 1.2, 4, 1.2, 'tree');
+  });
 
-                this.updateParticles();
-                this.updateGhosts(time);
-                this.updateLights(time);
-                this.updateCamera(time);
+  // Rocks
+  const rockPositions = [[-5, -8], [8, -5], [-12, 10], [15, -12], [5, 15]];
+  rockPositions.forEach(([rx, rz]) => {
+    addWall(rx, 0, rz, 1.5, 1, 1.5, 'rock');
+  });
 
-                this.renderer.render(this.scene, this.camera);
-            }
+  // ===== CABIN EXTERIOR =====
+  // Cabin at (-20, 0, -20)
+  const cx = -20, cz = -20;
+  // Cabin walls
+  addWall(cx, 0, cz-4, 10, 4, 0.3, 'cabin_wall'); // back
+  addWall(cx, 0, cz+4, 10, 4, 0.3, 'cabin_wall'); // front
+  addWall(cx-5, 0, cz, 0.3, 4, 8, 'cabin_wall'); // left
+  addWall(cx+5, 0, cz, 0.3, 4, 8, 'cabin_wall'); // right
 
-            dispose() {
-                this.isRunning = false;
-                if (this.renderer) {
-                    this.renderer.dispose();
-                }
-            }
+  // Cabin floor (elevated slightly)
+  addFloor(cx, 0.1, cz, 10, 8);
+
+  // Cabin roof (collision so player can't jump over)
+  addWall(cx, 4, cz, 10, 0.5, 8, 'roof');
+
+  // Door (interactive)
+  doors.push({
+    x: cx, y: 0, z: cz+4,
+    w: 2, h: 3.5, d: 0.3,
+    rotation: 0,
+    open: false,
+    locked: true,
+    key: 'cabin_key',
+    name: 'Cabin Door',
+    targetZone: 'cabin_main'
+  });
+
+  // ===== CABIN INTERIOR =====
+  // Interior walls
+  const ix = cx, iz = cz; // same position but we'll handle zone switching
+  // Bedroom divider
+  addWall(cx-2, 0.1, cz-1, 0.3, 4, 6, 'interior_wall');
+  // Bedroom door
+  doors.push({
+    x: cx-2, y: 0.1, z: cz-1,
+    w: 0.3, h: 3.5, d: 1.5,
+    rotation: 0,
+    open: false,
+    locked: false,
+    name: 'Bedroom Door',
+    targetZone: 'cabin_bedroom',
+    interior: true
+  });
+
+  // Basement door (in main room corner)
+  doors.push({
+    x: cx+3, y: 0.1, z: cz+3,
+    w: 1.5, h: 3.5, d: 0.3,
+    rotation: 0,
+    open: false,
+    locked: true,
+    key: 'basement_key',
+    name: 'Basement Door',
+    targetZone: 'basement',
+    interior: true
+  });
+
+  // ===== BASEMENT =====
+  const bx = cx, bz = cz + 15;
+  addFloor(bx, -3, bz, 12, 12);
+  addWall(bx, -3, bz-6, 12, 5, 0.3, 'basement_wall');
+  addWall(bx, -3, bz+6, 12, 5, 0.3, 'basement_wall');
+  addWall(bx-6, -3, bz, 0.3, 5, 12, 'basement_wall');
+  addWall(bx+6, -3, bz, 0.3, 5, 12, 'basement_wall');
+
+  // Basement to cave tunnel
+  doors.push({
+    x: bx+6, y: -3, z: bz,
+    w: 0.3, h: 3.5, d: 2,
+    rotation: 0,
+    open: false,
+    locked: false,
+    name: 'Tunnel',
+    targetZone: 'cave',
+    interior: true
+  });
+
+  // ===== CAVE =====
+  const caveX = bx + 25, caveZ = bz;
+  addFloor(caveX, -5, caveZ, 20, 20);
+  // Cave walls (irregular)
+  addWall(caveX-10, -5, caveZ, 0.5, 8, 20, 'cave_wall');
+  addWall(caveX+10, -5, caveZ, 0.5, 8, 20, 'cave_wall');
+  addWall(caveX, -5, caveZ-10, 20, 8, 0.5, 'cave_wall');
+  addWall(caveX, -5, caveZ+10, 20, 8, 0.5, 'cave_wall');
+
+  // Cave pillars
+  addWall(caveX-5, -5, caveZ-5, 2, 8, 2, 'pillar');
+  addWall(caveX+5, -5, caveZ+5, 2, 8, 2, 'pillar');
+
+  // Exit to oak
+  doors.push({
+    x: caveX+10, y: -5, z: caveZ,
+    w: 0.3, h: 4, d: 3,
+    rotation: 0,
+    open: false,
+    locked: false,
+    name: 'Cave Exit',
+    targetZone: 'oak',
+    interior: true
+  });
+
+  // ===== OLD OAK =====
+  const ox = caveX + 30, oz = caveZ;
+  addFloor(ox, 0, oz, 30, 30);
+  // The Great Oak (massive collision)
+  addWall(ox, 0, oz, 6, 15, 6, 'oak_tree');
+  // Boundary
+  addWall(ox, 0, oz-15, 30, 5, 1, 'boundary');
+  addWall(ox, 0, oz+15, 30, 5, 1, 'boundary');
+  addWall(ox-15, 0, oz, 1, 5, 30, 'boundary');
+  addWall(ox+15, 0, oz, 1, 5, 30, 'boundary');
+
+  // ===== ITEMS =====
+  items.push({
+    x: 12, y: 0.5, z: 8,
+    type: 'key', keyType: 'cabin_key',
+    name: 'Rusty Key', mesh: null,
+    glow: 0xff0000, pickedUp: false
+  });
+  items.push({
+    x: cx-3, y: 0.5, z: cz-2,
+    type: 'key', keyType: 'basement_key',
+    name: 'Basement Key', mesh: null,
+    glow: 0xff4400, pickedUp: false
+  });
+  items.push({
+    x: caveX, y: -4.5, z: caveZ,
+    type: 'amulet',
+    name: 'Amulet of Shadows', mesh: null,
+    glow: 0x6600ff, pickedUp: false
+  });
+  items.push({
+    x: 5, y: 0.5, z: -10,
+    type: 'note',
+    name: 'Bloody Note', mesh: null,
+    glow: 0xaa0000, pickedUp: false
+  });
+  items.push({
+    x: cx+2, y: 0.5, z: cz+1,
+    type: 'health',
+    name: 'Healing Potion', mesh: null,
+    glow: 0x00ff00, pickedUp: false
+  });
+
+  return { walls, floors, doors, items, treePositions, rockPositions };
+}
+
+// ============ MONSTER CLASS ============
+class Monster {
+  constructor(type, startPos, scene) {
+    this.type = type;
+    this.position = new THREE.Vector3(startPos.x, startPos.y, startPos.z);
+    this.velocity = new THREE.Vector3();
+    this.scene = scene;
+    this.state = 'patrol'; // patrol, chase, attack, search, dead
+    this.patrolIndex = 0;
+    this.patrolPoints = this.generatePatrol();
+    this.detectionRange = type === 'stalker' ? 15 : type === 'crawler' ? 12 : 20;
+    this.attackRange = 2;
+    this.speed = type === 'stalker' ? 2.5 : type === 'crawler' ? 5 : 1;
+    this.chaseSpeed = type === 'stalker' ? 5 : type === 'crawler' ? 8 : 3;
+    this.damage = type === 'stalker' ? 35 : type === 'crawler' ? 20 : 15;
+    this.attackCooldown = 0;
+    this.searchTimer = 0;
+    this.lastSeenPlayer = new THREE.Vector3();
+    this.mesh = null;
+    this.createMesh();
+  }
+
+  generatePatrol() {
+    const points = [];
+    for (let i = 0; i < 4; i++) {
+      points.push(new THREE.Vector3(
+        this.position.x + (Math.random() - 0.5) * 20,
+        this.position.y,
+        this.position.z + (Math.random() - 0.5) * 20
+      ));
+    }
+    return points;
+  }
+
+  createMesh() {
+    const group = new THREE.Group();
+
+    if (this.type === 'stalker') {
+      // Tall slender figure
+      const bodyGeo = new THREE.CylinderGeometry(0.3, 0.4, 4, 8);
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.9 });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.position.y = 2;
+      group.add(body);
+
+      // Head
+      const headGeo = new THREE.SphereGeometry(0.35, 8, 8);
+      const headMat = new THREE.MeshStandardMaterial({ color: 0x111, roughness: 0.5 });
+      const head = new THREE.Mesh(headGeo, headMat);
+      head.position.y = 4.2;
+      group.add(head);
+
+      // Arms (long)
+      const armGeo = new THREE.CylinderGeometry(0.08, 0.08, 3.5, 4);
+      const armMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a });
+      const leftArm = new THREE.Mesh(armGeo, armMat);
+      leftArm.position.set(-0.5, 2.5, 0);
+      leftArm.rotation.z = 0.2;
+      group.add(leftArm);
+      const rightArm = new THREE.Mesh(armGeo, armMat);
+      rightArm.position.set(0.5, 2.5, 0);
+      rightArm.rotation.z = -0.2;
+      group.add(rightArm);
+
+      // Glowing eyes
+      const eyeGeo = new THREE.SphereGeometry(0.06, 4, 4);
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+      const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+      leftEye.position.set(-0.12, 4.25, 0.25);
+      group.add(leftEye);
+      const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+      rightEye.position.set(0.12, 4.25, 0.25);
+      group.add(rightEye);
+
+    } else if (this.type === 'crawler') {
+      // Low, fast creature
+      const bodyGeo = new THREE.BoxGeometry(1.2, 0.6, 2);
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1a0505 });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.position.y = 0.3;
+      group.add(body);
+
+      // Head
+      const headGeo = new THREE.ConeGeometry(0.3, 0.8, 4);
+      const head = new THREE.Mesh(headGeo, bodyMat);
+      head.position.set(0, 0.4, 1.2);
+      head.rotation.x = Math.PI / 2;
+      group.add(head);
+
+      // Legs
+      for (let i = 0; i < 4; i++) {
+        const legGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.8, 4);
+        const leg = new THREE.Mesh(legGeo, bodyMat);
+        leg.position.set((i < 2 ? -0.4 : 0.4), 0.2, (i % 2 === 0 ? 0.6 : -0.6));
+        leg.rotation.x = 0.5;
+        group.add(leg);
+      }
+
+      // Glowing eyes
+      const eyeGeo = new THREE.SphereGeometry(0.05, 4, 4);
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+      const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+      leftEye.position.set(-0.15, 0.5, 1.35);
+      group.add(leftEye);
+      const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+      rightEye.position.set(0.15, 0.5, 1.35);
+      group.add(rightEye);
+
+    } else if (this.type === 'watcher') {
+      // Ghostly apparition
+      const geo = new THREE.SphereGeometry(0.8, 8, 8);
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0x4400aa, transparent: true, opacity: 0.3
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.y = 1.5;
+      group.add(mesh);
+
+      // Inner core
+      const coreGeo = new THREE.SphereGeometry(0.3, 6, 6);
+      const coreMat = new THREE.MeshBasicMaterial({ color: 0x220066 });
+      const core = new THREE.Mesh(coreGeo, coreMat);
+      core.position.y = 1.5;
+      group.add(core);
+    }
+
+    group.position.copy(this.position);
+    this.scene.add(group);
+    this.mesh = group;
+  }
+
+  update(dt, player, walls) {
+    if (this.state === 'dead') return;
+
+    const dist = this.position.distanceTo(player.position);
+    const canSee = dist < this.detectionRange && this.hasLineOfSight(player.position, walls);
+
+    // State machine
+    if (this.state === 'patrol') {
+      if (canSee) {
+        this.state = 'chase';
+        this.lastSeenPlayer.copy(player.position);
+        // JUMP SCARE: monster first sees player
+        if (dist < 8 && Math.random() > 0.5) {
+          return 'jumpscare';
         }
-
-        // ============ GAME STATE MANAGEMENT ============
-        class GameState {
-            constructor() {
-                this.currentScreen = 'main-menu';
-                this.player = {
-                    name: 'Adventurer',
-                    health: 100,
-                    sanity: 100,
-                    level: 1,
-                    location: 'Darkwood Forest',
-                    inventory: []
-                };
-                this.gameProgress = {
-                    currentChapter: 'start',
-                    decisions: []
-                };
-                this.settings = {
-                    musicVolume: 50,
-                    sfxVolume: 70,
-                    textSpeed: 'normal',
-                    flashlightMode: true
-                };
-                this.loadSettings();
-            }
-
-            saveGame() {
-                const saveData = {
-                    player: this.player,
-                    gameProgress: this.gameProgress,
-                    timestamp: new Date().toISOString()
-                };
-                localStorage.setItem('darkwood-save', JSON.stringify(saveData));
-                return true;
-            }
-
-            loadGame() {
-                const saveData = localStorage.getItem('darkwood-save');
-                if (saveData) {
-                    const parsed = JSON.parse(saveData);
-                    this.player = parsed.player;
-                    this.gameProgress = parsed.gameProgress;
-                    return true;
-                }
-                return false;
-            }
-
-            hasSaveData() {
-                return localStorage.getItem('darkwood-save') !== null;
-            }
-
-            deleteSave() {
-                localStorage.removeItem('darkwood-save');
-            }
-
-            saveSettings() {
-                localStorage.setItem('darkwood-settings', JSON.stringify(this.settings));
-            }
-
-            loadSettings() {
-                const settingsData = localStorage.getItem('darkwood-settings');
-                if (settingsData) {
-                    this.settings = { ...this.settings, ...JSON.parse(settingsData) };
-                }
-            }
+      } else {
+        this.patrol(dt);
+      }
+    } else if (this.state === 'chase') {
+      if (canSee) {
+        this.lastSeenPlayer.copy(player.position);
+        this.moveToward(player.position, this.chaseSpeed, dt, walls);
+        if (dist < this.attackRange) {
+          this.state = 'attack';
         }
+      } else {
+        this.state = 'search';
+        this.searchTimer = 5;
+      }
+    } else if (this.state === 'search') {
+      this.searchTimer -= dt;
+      if (canSee) {
+        this.state = 'chase';
+      } else if (this.searchTimer <= 0) {
+        this.state = 'patrol';
+      } else {
+        this.moveToward(this.lastSeenPlayer, this.speed * 0.5, dt, walls);
+      }
+    } else if (this.state === 'attack') {
+      this.attackCooldown -= dt;
+      if (dist > this.attackRange + 1) {
+        this.state = 'chase';
+      } else if (this.attackCooldown <= 0) {
+        this.attackCooldown = 1.5;
+        return 'attack';
+      }
+    }
 
-        // ============ HORROR STORY DATA ============
-        const gameStory = {
-            start: {
-                text: "You awaken in the Darkwood Forest, the ancient trees looming overhead like silent sentinels. The air is thick with mist, and you can hear the distant howl of wolves. Your flashlight flickers weakly, casting long shadows that seem to move on their own.\n\nA worn path leads north, while a faint light flickers to the east. You notice your leather satchel nearby, and something else... footprints in the mud that were not there before.",
-                choices: [
-                    { text: "Follow the path north", next: 'northPath' },
-                    { text: "Investigate the light to the east", next: 'eastLight' },
-                    { text: "Search your satchel", next: 'searchArea' },
-                    { text: "Examine the footprints", next: 'examineFootprints' }
-                ]
-            },
-            northPath: {
-                text: "The path winds through the dark forest. The trees seem to lean in, their branches reaching toward you like skeletal fingers. After walking for what feels like hours, you come across an old, abandoned cabin. The door creaks open in the wind, revealing darkness within.\n\nYou feel a cold breath on your neck, but when you turn, nothing is there.",
-                choices: [
-                    { text: "Enter the cabin", next: 'enterCabin' },
-                    { text: "Continue past the cabin", next: 'continuePast' },
-                    { text: "Circle around to the back", next: 'cabinBack' },
-                    { text: "Shine flashlight at the trees", next: 'shineTrees' }
-                ],
-                horror: true
-            },
-            eastLight: {
-                text: "You push through the underbrush towards the flickering light. You discover a small campfire with a hooded figure sitting beside it. The figure turns towards you, revealing an old woman's weathered face. Her eyes are completely white.\n\n'Come closer, child,' she whispers. 'I have been waiting for you.'",
-                choices: [
-                    { text: "Approach the woman", next: 'approachWoman' },
-                    { text: "Hide and observe", next: 'hideObserve' },
-                    { text: "Call out a greeting", next: 'greetWoman' },
-                    { text: "Run back to the path", next: 'northPath' }
-                ],
-                horror: true
-            },
-            searchArea: {
-                text: "You search your satchel and find: a rusty dagger, a piece of parchment with strange markings, three gold coins, and a small healing potion. As you close the satchel, you notice something scratched into the leather: 'DO NOT TRUST THE LIGHT.'",
-                choices: [
-                    { text: "Take everything and head north", next: 'northPath' },
-                    { text: "Take only the dagger and go east", next: 'eastLight' },
-                    { text: "Read the parchment first", next: 'readParchment' },
-                    { text: "Investigate the warning", next: 'investigateWarning' }
-                ]
-            },
-            examineFootprints: {
-                text: "The footprints are large, barefoot, and pressed deep into the mud. They lead from the east, circle around where you were lying, and then head north. The spacing between steps is wrong, too far apart, as if whatever made them was not walking normally.\n\nYour sanity decreases as you realize they might not be human.",
-                choices: [
-                    { text: "Follow the footprints north", next: 'northPath' },
-                    { text: "Go east to find the source", next: 'eastLight' },
-                    { text: "Hide and wait", next: 'hideWait' }
-                ],
-                sanityDamage: 10
-            },
-            enterCabin: {
-                text: "The cabin interior is dusty but surprisingly well-preserved. A journal lies open on a desk, and a locked chest sits in the corner. The floorboards creak beneath your feet.\n\nFrom upstairs, you hear the sound of a child humming a nursery rhyme... but this cabin has been abandoned for years.",
-                choices: [
-                    { text: "Read the journal", next: 'readJournal' },
-                    { text: "Try to open the chest", next: 'openChest' },
-                    { text: "Investigate the humming", next: 'investigateHumming' },
-                    { text: "Search for supplies", next: 'searchSupplies' }
-                ],
-                horror: true
-            },
-            approachWoman: {
-                text: "The old woman smiles warmly as you approach, but her smile is too wide, showing too many teeth. 'Ah, another lost soul,' she says, her voice like rustling leaves. 'Sit, child. I have tea and answers for those who seek them.'\n\nThe fire behind her casts no shadow.",
-                choices: [
-                    { text: "Accept her offer", next: 'acceptTea' },
-                    { text: "Ask about the forest", next: 'askForest' },
-                    { text: "Politely decline and continue north", next: 'northPath' },
-                    { text: "Attack her with your dagger", next: 'attackWoman' }
-                ],
-                horror: true
-            },
-            readParchment: {
-                text: "The parchment contains a crude map of the forest with an 'X' marked near a cave to the north. Beneath the map, it reads: 'The Amulet of Shadows lies within. Beware the Guardian. It wears the face of the dead.'\n\nThe ink looks fresh. Dried blood fresh.",
-                choices: [
-                    { text: "Follow the map north", next: 'northPath' },
-                    { text: "Take everything and go east first", next: 'eastLight' }
-                ]
-            },
-            readJournal: {
-                text: "The journal belongs to a hunter named Marcus. The last entry reads: 'I have tracked the beast to its lair near the old oak. It guards something precious, but I am too weak to continue. To whoever finds this, the chest key is hidden under the hearthstone. DO NOT LOOK IN THE MIRROR.'\n\nYou glance at the wall. There is a broken mirror hanging there, and in its reflection... someone stands behind you.",
-                choices: [
-                    { text: "Look under the hearthstone", next: 'findKey' },
-                    { text: "Smash the mirror", next: 'smashMirror' },
-                    { text: "Leave the cabin immediately", next: 'northPath' }
-                ],
-                horror: true,
-                sanityDamage: 15
-            },
-            findKey: {
-                text: "You lift the hearthstone and find a rusty iron key! As you grasp it, the humming from upstairs stops abruptly. The silence is deafening.\n\nFootsteps. Slow, deliberate footsteps descending the stairs.",
-                choices: [
-                    { text: "Open the chest quickly", next: 'openChestWithKey' },
-                    { text: "Hide behind the desk", next: 'hideBehindDesk' },
-                    { text: "Confront whatever is coming", next: 'confrontEntity' }
-                ],
-                horror: true
-            },
-            openChest: {
-                text: "The chest is locked tight. You will need to find a key somewhere in the cabin. As you try to force it, you hear a whisper directly in your ear: 'That is mine.'",
-                choices: [
-                    { text: "Search the cabin more thoroughly", next: 'readJournal' },
-                    { text: "Give up and leave", next: 'northPath' }
-                ]
-            },
-            openChestWithKey: {
-                text: "The key fits perfectly! Inside the chest, you find a silver amulet that glows faintly with an unholy light, a healing potion, and a note: 'The amulet will protect you from the shadows. But it also draws them near. Choose wisely.'\n\nThe footsteps stop at the bottom of the stairs. You hear breathing.",
-                choices: [
-                    { text: "Equip the amulet and escape", next: 'escapeCabin' },
-                    { text: "Leave the amulet, take the potion", next: 'leaveAmulet' }
-                ],
-                horror: true
-            },
-            hideObserve: {
-                text: "You hide behind a large tree and watch. The old woman seems to be brewing something in a small pot. After a while, she speaks without turning: 'I know you are there, traveler. No need to hide. I can smell your fear.'\n\nShe holds up a mirror, and in its reflection, you see yourself... but your reflection is smiling, and you are not.",
-                choices: [
-                    { text: "Reveal yourself", next: 'approachWoman' },
-                    { text: "Flee back to the main path", next: 'northPath' },
-                    { text: "Close your eyes and count to ten", next: 'countToTen' }
-                ],
-                horror: true,
-                sanityDamage: 10
-            },
-            greetWoman: {
-                text: "'Hello there!' you call out. The old woman looks up and smiles. 'Well met, traveler! Come, warm yourself by the fire. The forest is dangerous at night.'\n\nAs you step closer, you notice the fire gives off no heat, and the logs are not burning, they are bleeding.",
-                choices: [
-                    { text: "Join her at the fire", next: 'approachWoman' },
-                    { text: "Thank her but continue on", next: 'northPath' },
-                    { text: "Point out the bleeding logs", next: 'pointOutLogs' }
-                ],
-                horror: true
-            },
-            acceptTea: {
-                text: "The tea is warm and surprisingly revitalizing, but it tastes like copper and ash. 'The forest holds many secrets,' the woman says. 'Seek the old oak tree to the north. There you will find what you need.'\n\nYou feel refreshed, but your reflection in the teacup shows you aging rapidly before returning to normal. (+20 Health, -10 Sanity)",
-                choices: [
-                    { text: "Thank her and head north", next: 'northPath' },
-                    { text: "Ask more questions", next: 'askForest' }
-                ],
-                healthBonus: 20,
-                sanityDamage: 10
-            },
-            askForest: {
-                text: "'The Darkwood is ancient,' she explains, her eyes now completely black. 'It was once a place of great magic. Now shadows lurk here. But there is still hope, the Amulet of Shadows can restore balance. Or destroy everything. It depends on who wields it.'\n\nShe leans in close. 'Are you the one, child? Or are you just another meal?'",
-                choices: [
-                    { text: "Ask where to find the amulet", next: 'acceptTea' },
-                    { text: "Thank her and leave", next: 'northPath' },
-                    { text: "Ask what she means by 'meal'", next: 'askMeal' }
-                ],
-                horror: true
-            },
-            searchSupplies: {
-                text: "You search the cabin and find some dried meat, a water flask, and bandages. As you gather them, you notice the meat is moving. Not crawling, breathing. It is still alive somehow.",
-                choices: [
-                    { text: "Take supplies and read the journal", next: 'readJournal' },
-                    { text: "Take supplies and leave", next: 'northPath' },
-                    { text: "Leave the meat, take the rest", next: 'leaveMeat' }
-                ],
-                horror: true
-            },
-            restInCabin: {
-                text: "You decide to rest in the cabin. It is warm and safe, or so it seems. In your dreams, you see the forest from above, and in its center, something vast and ancient stirs beneath the roots. It knows you are here.\n\nYou wake up with scratches on your arms. (+30 Health, -15 Sanity)",
-                choices: [
-                    { text: "Continue your journey north", next: 'northPath' },
-                    { text: "Head east to investigate the light", next: 'eastLight' }
-                ],
-                healthBonus: 30,
-                sanityDamage: 15
-            },
-            continuePast: {
-                text: "You continue past the cabin. The forest grows darker and more ominous. You can hear strange whispers among the trees, and they are saying your name. Perhaps you should have explored the cabin...\n\nThe path ahead is blocked by a fallen tree, but there is a narrow gap beneath it. You can see eyes glowing in the darkness beyond.",
-                choices: [
-                    { text: "Crawl under the tree", next: 'deepForest' },
-                    { text: "Turn back to the cabin", next: 'enterCabin' },
-                    { text: "Climb over the tree", next: 'climbTree' }
-                ],
-                horror: true
-            },
-            cabinBack: {
-                text: "Behind the cabin, you find a small garden with medicinal herbs and a fresh water spring. But the herbs are growing in patterns, circles, spirals, symbols. And the spring water is red.\n\n(+10 Health)",
-                choices: [
-                    { text: "Enter the cabin", next: 'enterCabin' },
-                    { text: "Continue your journey", next: 'northPath' },
-                    { text: "Collect the herbs", next: 'collectHerbs' }
-                ],
-                healthBonus: 10
-            },
-            deepForest: {
-                text: "You venture deeper into the forest. The trees seem to close in around you, their branches intertwining to form a canopy that blocks all light. In the distance, you spot a massive old oak tree with something glinting in its branches...\n\nBut between you and the oak, the shadows are moving. They are not just absence of light anymore. They are something else. Something hungry.",
-                choices: [
-                    { text: "Approach the old oak", next: 'start' },
-                    { text: "Return to the main path", next: 'start' },
-                    { text: "Use the amulet if you have it", next: 'useAmulet' }
-                ],
-                horror: true,
-                sanityDamage: 20
-            },
-            investigateHumming: {
-                text: "You climb the creaking stairs, each step groaning under your weight. The humming grows louder, more distorted. At the top, a child's room. A rocking chair moves on its own. In the corner, a doll sits facing the wall.\n\nThe doll turns its head 180 degrees to look at you. 'You are not Marcus,' it says in a deep, guttural voice.",
-                choices: [
-                    { text: "Apologize and back away", next: 'readJournal' },
-                    { text: "Ask where Marcus is", next: 'askMarcus' },
-                    { text: "Throw the doll out the window", next: 'throwDoll' }
-                ],
-                horror: true,
-                sanityDamage: 25
-            },
-            shineTrees: {
-                text: "You shine your flashlight at the trees. For a moment, you see them clearly, hundreds of faces embedded in the bark, mouths open in silent screams. Then the light flickers, and they are just trees again.\n\nBut now the faces are in your mind, and they will not stop screaming.",
-                choices: [
-                    { text: "Enter the cabin", next: 'enterCabin' },
-                    { text: "Run past the cabin", next: 'continuePast' },
-                    { text: "Turn off the flashlight", next: 'darkness' }
-                ],
-                horror: true,
-                sanityDamage: 15
-            },
-            darkness: {
-                text: "You turn off your flashlight. The darkness is absolute, suffocating. You can feel things brushing against your skin, whispering in languages you do not know but somehow understand. 'Stay,' they say. 'Stay with us. Forever.'\n\nYou feel hands pulling you down into the earth.",
-                choices: [
-                    { text: "Turn the flashlight back on!", next: 'shineTrees' },
-                    { text: "Let go and accept the darkness", next: 'badEnding' }
-                ],
-                horror: true,
-                sanityDamage: 30
-            },
-            badEnding: {
-                text: "The darkness consumes you. You become part of the forest, another face in the bark, another voice in the wind. The Darkwood has claimed you, as it has claimed so many before.\n\nSometimes, travelers hear your voice among the trees, whispering warnings that come too late.\n\n[THE END - BAD ENDING]",
-                choices: [
-                    { text: "Restart from checkpoint", next: 'start' },
-                    { text: "Return to main menu", next: 'menu' }
-                ],
-                gameOver: true
-            },
-            escapeCabin: {
-                text: "You clutch the amulet and burst out of the cabin. Behind you, something screams, a sound that should not come from any human throat. The amulet grows warm against your chest, and the shadows around you retreat.\n\nYou run north, not daring to look back. The forest seems to part before you, but you know it is only temporary. The thing in the cabin is still there. And it is angry.",
-                choices: [
-                    { text: "Keep running north", next: 'deepForest' },
-                    { text: "Find a place to hide", next: 'hideInForest' }
-                ],
-                horror: true
-            },
-            hideInForest: {
-                text: "You dive behind a fallen log, pressing yourself into the rotting wood. The amulet pulses with heat. Through gaps in the wood, you see it pass by, a shape of darkness and teeth, moving wrong, like a puppet with broken strings.\n\nIt stops. Turns. Sniffs the air.\n\nIt knows you are close.",
-                choices: [
-                    { text: "Hold your breath", next: 'holdBreath' },
-                    { text: "Run while its back is turned", next: 'deepForest' },
-                    { text: "Use the amulet's power", next: 'amuletPower' }
-                ],
-                horror: true,
-                sanityDamage: 10
-            },
-            holdBreath: {
-                text: "You hold your breath until your lungs burn. The creature circles the log once, twice, then moves on with a sound like breaking bones. You wait ten minutes before moving.\n\nWhen you finally stand, your legs are numb, but you are alive. For now.",
-                choices: [
-                    { text: "Continue north carefully", next: 'deepForest' }
-                ],
-                sanityDamage: 5
-            },
-            amuletPower: {
-                text: "You grip the amulet and focus. It flares with blinding purple light, and the creature shrieks, recoiling from the brightness. For a moment, you see its true form, something that was never human, never animal, something that existed before the forest.\n\nThe light fades. The creature is gone, but the amulet is now ice-cold. You feel like something has been watching you ever since.",
-                choices: [
-                    { text: "Continue north", next: 'deepForest' }
-                ],
-                sanityDamage: 20
-            },
-            askMeal: {
-                text: "The old woman's smile widens impossibly. 'I mean exactly what you think I mean, dear.' Her form flickers, and for a split second, you see something else beneath the skin, something with too many limbs and eyes that see in directions that do not exist.\n\n'But do not worry,' she says, her voice now layered with whispers. 'You are not ripe yet. Soon, though. Very soon.'",
-                choices: [
-                    { text: "Run away", next: 'northPath' },
-                    { text: "Throw the tea in her face", next: 'throwTea' },
-                    { text: "Ask what she wants from you", next: 'askWant' }
-                ],
-                horror: true,
-                sanityDamage: 15
-            },
-            throwTea: {
-                text: "You throw the tea in her face. She does not flinch. The liquid passes through her like she is made of smoke, and where it hits the ground, the grass turns black and dies instantly.\n\n'Now, now,' she tuts, her form solidifying again. 'That was not very polite.' The fire behind her erupts into purple flames. 'Run along, child. Before I change my mind about letting you go.'",
-                choices: [
-                    { text: "Run north", next: 'northPath' },
-                    { text: "Apologize profusely", next: 'apologize' }
-                ],
-                horror: true
-            },
-            pointOutLogs: {
-                text: "'Your logs are bleeding,' you say, pointing. The old woman looks at the fire, then back at you, her expression unreadable. 'Are they?' she asks softly. 'Or are your eyes bleeding, and you are only seeing what the forest wants you to see?'\n\nYou wipe your eyes. Your hand comes away red.",
-                choices: [
-                    { text: "Wipe your eyes and leave", next: 'northPath' },
-                    { text: "Ask what the forest wants", next: 'askForestWants' }
-                ],
-                horror: true,
-                sanityDamage: 10
-            },
-            countToTen: {
-                text: "You close your eyes and count. One... two... three... At seven, you feel something cold touch your face. Eight... nine... At ten, you open your eyes. The old woman is gone. The fire is out. The clearing is empty.\n\nBut written in the ashes are the words: 'I WILL SEE YOU AGAIN, CHILD.'",
-                choices: [
-                    { text: "Run north", next: 'northPath' },
-                    { text: "Erase the words", next: 'eraseWords' }
-                ],
-                horror: true,
-                sanityDamage: 10
-            },
-            smashMirror: {
-                text: "You grab a chair and smash the mirror. Glass shatters everywhere, but instead of falling, the shards hang in the air, each one showing a different reflection of you, some old, some young, some dead.\n\nThen they all speak at once: 'You should not have done that.' The shards fly toward you like shrapnel.",
-                choices: [
-                    { text: "Dodge!", next: 'dodgeShards' },
-                    { text: "Use your satchel as a shield", next: 'shieldShards' }
-                ],
-                horror: true,
-                healthDamage: 20
-            },
-            dodgeShards: {
-                text: "You dive to the side as glass shards embed themselves in the wall where you stood. One catches your arm, drawing blood. The mirror frame is empty now, but you can still feel eyes watching you from the broken glass on the floor.\n\n(-10 Health)",
-                choices: [
-                    { text: "Look under the hearthstone", next: 'findKey' },
-                    { text: "Leave the cabin", next: 'northPath' }
-                ],
-                healthDamage: 10
-            },
-            shieldShards: {
-                text: "You raise your satchel just in time. Shards embed themselves in the leather, some passing straight through. When you lower the satchel, the mirror is whole again, and your reflection is smiling at you with teeth that are not yours.\n\n(-5 Health, -15 Sanity)",
-                choices: [
-                    { text: "Smash it again", next: 'smashMirror' },
-                    { text: "Leave the cabin", next: 'northPath' }
-                ],
-                healthDamage: 5,
-                sanityDamage: 15
-            },
-            hideBehindDesk: {
-                text: "You scramble behind the desk, pressing yourself against the rotting wood. The footsteps reach the bottom of the stairs and stop. You hear breathing, wet and ragged, just inches from where you hide.\n\nThen silence. Long, terrible silence.\n\nWhen you finally peek out, the room is empty. But scratched into the floor in front of the desk are the words: 'FOUND YOU.'",
-                choices: [
-                    { text: "Open the chest now", next: 'openChestWithKey' },
-                    { text: "Run out of the cabin", next: 'northPath' }
-                ],
-                horror: true,
-                sanityDamage: 20
-            },
-            confrontEntity: {
-                text: "You stand your ground, gripping your dagger. The thing that descends the stairs is... wrong. It moves like a broken marionette, limbs bending in ways that should not be possible. Its face is blank, smooth as porcelain, but its mouth stretches impossibly wide.\n\nIt tilts its head at you, birdlike. 'Marcus?' it asks in a child's voice. Then, seeing you are not Marcus, it screams. The sound shatters the windows.",
-                choices: [
-                    { text: "Attack it", next: 'attackEntity' },
-                    { text: "Run!", next: 'escapeCabin' }
-                ],
-                horror: true,
-                sanityDamage: 25
-            },
-            attackEntity: {
-                text: "You lunge forward with your dagger. The blade passes through the creature like smoke, but where it touches, the thing recoils, shrieking. You slash again and again, driving it back toward the stairs.\n\nIt dissolves into shadows, but not before whispering: 'I will remember your face, traveler.'\n\nYou are alone. The cabin is silent. But you know it is not gone, just... waiting.",
-                choices: [
-                    { text: "Open the chest", next: 'openChestWithKey' },
-                    { text: "Leave while you can", next: 'northPath' }
-                ],
-                horror: true
-            },
-            useAmulet: {
-                text: "You raise the silver amulet. The shadows freeze, then retreat, hissing like steam. The path to the oak tree clears, but the amulet is growing hot, burning your skin. You can feel something vast and ancient turning its attention toward you.\n\nYou have its attention now. And it is curious.",
-                choices: [
-                    { text: "Approach the oak", next: 'start' },
-                    { text: "Run back", next: 'start' }
-                ],
-                horror: true,
-                sanityDamage: 15
-            },
-            hideWait: {
-                text: "You hide behind a thick tree trunk, holding your breath. Minutes pass. Then you hear it, footsteps, heavy and wrong, passing by your hiding spot. You catch a glimpse of it: too tall, too thin, moving on legs that bend backward.\n\nIt stops. Sniffs the air. Then continues on, dragging something behind it. Something that used to be a person.",
-                choices: [
-                    { text: "Wait longer", next: 'hideWaitLonger' },
-                    { text: "Sneak away north", next: 'northPath' }
-                ],
-                horror: true,
-                sanityDamage: 20
-            },
-            hideWaitLonger: {
-                text: "You wait until your legs cramp and your lungs burn. When you finally emerge, the footprints are gone, but carved into the tree you hid behind are fresh scratch marks. Deep, ragged, and shaped like words you cannot read but somehow understand: 'NEXT TIME.'",
-                choices: [
-                    { text: "Head north quickly", next: 'northPath' }
-                ],
-                sanityDamage: 10
-            },
-            climbTree: {
-                text: "You try to climb over the fallen tree. Halfway up, you feel something grab your ankle. It is cold, impossibly cold. You kick free and tumble to the other side, scrambling to your feet.\n\nBehind you, the tree is just a tree. But your ankle is bruised, and you can still feel those fingers.",
-                choices: [
-                    { text: "Run north", next: 'deepForest' },
-                    { text: "Go back to the cabin", next: 'enterCabin' }
-                ],
-                healthDamage: 10,
-                sanityDamage: 15
-            },
-            collectHerbs: {
-                text: "You carefully collect the herbs. As you touch them, they whisper your name. You drop them, but they keep whispering. You stuff them in your satchel, and the whispering stops.\n\nLater, when you check your satchel, the herbs have arranged themselves into a face. It is smiling at you.",
-                choices: [
-                    { text: "Throw them away", next: 'cabinBack' },
-                    { text: "Keep them and move on", next: 'northPath' }
-                ],
-                horror: true,
-                sanityDamage: 10
-            },
-            investigateWarning: {
-                text: "You trace the scratches with your finger. As you do, the leather grows warm, then hot. A vision flashes in your mind: the old woman by the fire, but her true form, a thing of shadows and hunger, wearing a human skin like a coat.\n\nThe vision fades. You are on your knees, gasping. The warning was not a warning. It was a message. From someone who did not survive.",
-                choices: [
-                    { text: "Head north, avoid the east", next: 'northPath' },
-                    { text: "Go east anyway, prepared", next: 'eastLight' }
-                ],
-                sanityDamage: 15
-            },
-            leaveMeat: {
-                text: "You leave the breathing meat and take only the flask and bandages. As you turn to leave, you hear a wet chewing sound from behind you. The meat is gone. In its place, a message written in something dark: 'WISE CHOICE.'",
-                choices: [
-                    { text: "Read the journal", next: 'readJournal' },
-                    { text: "Leave the cabin", next: 'northPath' }
-                ],
-                horror: true
-            },
-            askMarcus: {
-                text: "'Marcus is everywhere now,' the doll says, its head rotating slowly. 'He is in the walls. In the floor. In the trees. Marcus wanted to leave, so the forest made him part of it. Just like it will make you part of it, if you try to leave.'\n\nThe doll's eyes blink, though they have no lids. 'Do you want to be part of the forest, traveler?'",
-                choices: [
-                    { text: "Say no and back away", next: 'readJournal' },
-                    { text: "Ask how to avoid Marcus's fate", next: 'avoidFate' }
-                ],
-                horror: true,
-                sanityDamage: 20
-            },
-            throwDoll: {
-                text: "You grab the doll and hurl it out the window. It does not break. It stands up in the grass below, tilting its head up at you. Then it waves.\n\nWhen you look back at the room, the rocking chair has stopped. On the seat is a key. The key to the chest.",
-                choices: [
-                    { text: "Take the key", next: 'findKey' },
-                    { text: "Leave the key and run", next: 'northPath' }
-                ],
-                horror: true
-            },
-            askForestWants: {
-                text: "'The forest wants what it has always wanted,' the old woman says, her voice dropping to a whisper. 'It wants to grow. To consume. To become everything. And it needs souls to do that. Fresh souls. Souls that still remember what it was like to be human.'\n\nShe touches your face. Her fingers are ice cold. 'You still remember, do you not, child? You still feel fear. The forest loves fear. It feeds on it.'",
-                choices: [
-                    { text: "Pull away and run", next: 'northPath' },
-                    { text: "Ask how to escape", next: 'escapeForest' }
-                ],
-                horror: true,
-                sanityDamage: 10
-            },
-            eraseWords: {
-                text: "You try to erase the words in the ashes, but your fingers pass through them like they are made of smoke. The words rise, floating in the air, then dissolve into your skin. You can feel them now, under your skin, moving, pulsing.\n\n'I WILL SEE YOU AGAIN, CHILD.' The voice is inside your head now. And it is laughing.",
-                choices: [
-                    { text: "Run north, do not look back", next: 'northPath' }
-                ],
-                sanityDamage: 20
-            },
-            apologize: {
-                text: "You apologize profusely. The old woman's expression softens, but her eyes remain cold. 'Apology accepted, child. But apologies do not feed the forest. Actions do.' She hands you a small vial of red liquid. 'Drink this. It will help you see what needs to be seen.'",
-                choices: [
-                    { text: "Drink it", next: 'drinkVial' },
-                    { text: "Refuse and leave", next: 'northPath' }
-                ],
-                horror: true
-            },
-            drinkVial: {
-                text: "You drink the liquid. It tastes like copper and honey. The world shifts. Colors you have never seen before bleed into your vision. You can see the threads now, the invisible threads that connect every living thing in the forest. And you can see the thing at the center, pulling those threads.\n\nIt sees you too. It smiles. (+20 Sanity, but at what cost?)",
-                choices: [
-                    { text: "Head north with new sight", next: 'northPath' }
-                ],
-                sanityBonus: 20
-            },
-            askWant: {
-                text: "'I want what the forest wants,' she says simply. 'I want you to find the amulet. I want you to bring it to the old oak. And then...' She pauses, her smile widening. 'And then I want to see what happens when a human tries to wield power that was never meant for them.'",
-                choices: [
-                    { text: "Agree and head north", next: 'northPath' },
-                    { text: "Refuse and run", next: 'northPath' }
-                ],
-                horror: true
-            },
-            avoidFate: {
-                text: "'There is only one way to avoid the forest's embrace,' the doll whispers. 'You must become more terrible than the forest itself. You must become the thing that even shadows fear.' The doll's face cracks, revealing darkness beneath. 'But are you willing to pay that price, traveler? Are you willing to become a monster to survive?'",
-                choices: [
-                    { text: "Say you will do what it takes", next: 'readJournal' },
-                    { text: "Say you will find another way", next: 'readJournal' }
-                ],
-                horror: true,
-                sanityDamage: 15
-            },
-            escapeForest: {
-                text: "'There is no escape,' the old woman says, and for the first time, she sounds sad. 'Not for you. Not for me. Not for anyone who steps into the Darkwood. The forest does not let go. It only... waits.' She looks at the trees around you. 'But there is a way to survive. For a time. Find the amulet. Wield its power. Become something the forest fears.'",
-                choices: [
-                    { text: "Ask where to find the amulet", next: 'acceptTea' },
-                    { text: "Leave and head north", next: 'northPath' }
-                ],
-                horror: true
-            },
-            leaveAmulet: {
-                text: "You leave the amulet in the chest and take only the healing potion. As you turn to leave, the footsteps resume, closer now. You run, not looking back, not stopping until the cabin is far behind you.\n\nYou are safe. For now. But without the amulet's protection, the shadows feel closer. Hungrier.",
-                choices: [
-                    { text: "Continue north", next: 'deepForest' }
-                ],
-                sanityDamage: 10
-            }
-        };
+    // Update mesh
+    if (this.mesh) {
+      this.mesh.position.copy(this.position);
+      // Face player or movement direction
+      const target = this.state === 'patrol' ? this.patrolPoints[this.patrolIndex] : player.position;
+      this.mesh.lookAt(target.x, this.position.y, target.z);
 
-        // ============ UI MANAGER ============
-        class UIManager {
-            constructor(gameState) {
-                this.gameState = gameState;
-                this.horrorEngine = null;
-                this.elements = {
-                    mainMenu: document.getElementById('main-menu'),
-                    settingsScreen: document.getElementById('settings-screen'),
-                    gameScreen: document.getElementById('game-screen'),
-                    gameText: document.getElementById('game-text'),
-                    gameChoices: document.getElementById('game-choices'),
-                    playerInput: document.getElementById('player-input'),
-                    inventoryList: document.getElementById('inventory-list'),
-                    health: document.getElementById('health'),
-                    healthBar: document.getElementById('health-bar'),
-                    sanity: document.getElementById('sanity'),
-                    sanityBar: document.getElementById('sanity-bar'),
-                    level: document.getElementById('level'),
-                    locationName: document.getElementById('location-name')
-                };
+      // Animation
+      if (this.type === 'crawler') {
+        this.mesh.position.y = 0.3 + Math.sin(Date.now() * 0.01) * 0.1;
+      } else if (this.type === 'watcher') {
+        this.mesh.position.y = 1.5 + Math.sin(Date.now() * 0.002) * 0.5;
+        this.mesh.rotation.y += dt * 0.5;
+        this.mesh.children[0].material.opacity = 0.2 + Math.sin(Date.now() * 0.003) * 0.15;
+      }
+    }
 
-                this.setupEventListeners();
-                this.applySettings();
-                this.updateContinueButton();
-            }
+    return null;
+  }
 
-            setupEventListeners() {
-                document.getElementById('play-btn').addEventListener('click', () => this.startNewGame());
-                document.getElementById('continue-btn').addEventListener('click', () => this.continueGame());
-                document.getElementById('settings-btn').addEventListener('click', () => this.showSettings());
+  patrol(dt) {
+    const target = this.patrolPoints[this.patrolIndex];
+    const dist = this.position.distanceTo(target);
+    if (dist < 1) {
+      this.patrolIndex = (this.patrolIndex + 1) % this.patrolPoints.length;
+    } else {
+      this.moveToward(target, this.speed * 0.5, dt, []);
+    }
+  }
 
-                document.getElementById('back-to-menu').addEventListener('click', () => this.showScreen('main-menu'));
-                document.getElementById('delete-save').addEventListener('click', () => this.deleteSaveData());
-
-                document.getElementById('music-volume').addEventListener('input', (e) => {
-                    this.gameState.settings.musicVolume = e.target.value;
-                    document.getElementById('music-value').textContent = e.target.value + '%';
-                    this.gameState.saveSettings();
-                });
-
-                document.getElementById('sfx-volume').addEventListener('input', (e) => {
-                    this.gameState.settings.sfxVolume = e.target.value;
-                    document.getElementById('sfx-value').textContent = e.target.value + '%';
-                    this.gameState.saveSettings();
-                });
-
-                document.getElementById('text-speed').addEventListener('change', (e) => {
-                    this.gameState.settings.textSpeed = e.target.value;
-                    this.gameState.saveSettings();
-                });
-
-                document.getElementById('flashlight-mode').addEventListener('change', (e) => {
-                    this.gameState.settings.flashlightMode = e.target.checked;
-                    this.gameState.saveSettings();
-                    this.applySettings();
-                });
-
-                document.getElementById('return-to-menu').addEventListener('click', () => {
-                    if (confirm('Return to main menu? Unsaved progress will be lost.')) {
-                        if (this.horrorEngine) {
-                            this.horrorEngine.dispose();
-                            this.horrorEngine = null;
-                        }
-                        this.showScreen('main-menu');
-                    }
-                });
-
-                document.getElementById('save-game-btn').addEventListener('click', () => this.saveGame());
-                document.getElementById('submit-input').addEventListener('click', () => this.handlePlayerInput());
-
-                document.getElementById('player-input').addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        this.handlePlayerInput();
-                    }
-                });
-            }
-
-            showScreen(screenName) {
-                document.querySelectorAll('.screen').forEach(screen => {
-                    screen.classList.remove('active');
-                });
-
-                switch(screenName) {
-                    case 'main-menu':
-                        this.elements.mainMenu.classList.add('active');
-                        this.updateContinueButton();
-                        break;
-                    case 'settings':
-                        this.elements.settingsScreen.classList.add('active');
-                        this.updateSettingsDisplay();
-                        break;
-                    case 'game':
-                        this.elements.gameScreen.classList.add('active');
-                        break;
-                }
-
-                this.gameState.currentScreen = screenName;
-            }
-
-            startNewGame() {
-                this.gameState.player = {
-                    name: 'Adventurer',
-                    health: 100,
-                    sanity: 100,
-                    level: 1,
-                    location: 'Darkwood Forest',
-                    inventory: []
-                };
-                this.gameState.gameProgress = {
-                    currentChapter: 'start',
-                    decisions: []
-                };
-
-                this.showScreen('game');
-                this.updatePlayerStats();
-
-                if (!this.horrorEngine) {
-                    this.horrorEngine = new Horror3DEngine();
-                    this.horrorEngine.init();
-                }
-
-                this.showGameText(gameStory.start);
-            }
-
-            continueGame() {
-                if (this.gameState.hasSaveData()) {
-                    if (this.gameState.loadGame()) {
-                        this.showScreen('game');
-                        this.updatePlayerStats();
-
-                        if (!this.horrorEngine) {
-                            this.horrorEngine = new Horror3DEngine();
-                            this.horrorEngine.init();
-                        }
-
-                        const currentChapter = this.gameState.gameProgress.currentChapter;
-                        if (gameStory[currentChapter]) {
-                            this.showGameText(gameStory[currentChapter]);
-                        } else {
-                            this.showGameText(gameStory.start);
-                        }
-
-                        this.showNotification('Nightmare continues...');
-                    }
-                } else {
-                    this.showNotification('No save data found!');
-                }
-            }
-
-            updateContinueButton() {
-                const continueBtn = document.getElementById('continue-btn');
-                if (this.gameState.hasSaveData()) {
-                    continueBtn.disabled = false;
-                    continueBtn.title = 'Continue your nightmare';
-                } else {
-                    continueBtn.disabled = true;
-                    continueBtn.title = 'No save data available';
-                }
-            }
-
-            showSettings() {
-                this.showScreen('settings');
-            }
-
-            updateSettingsDisplay() {
-                document.getElementById('music-volume').value = this.gameState.settings.musicVolume;
-                document.getElementById('music-value').textContent = this.gameState.settings.musicVolume + '%';
-                document.getElementById('sfx-volume').value = this.gameState.settings.sfxVolume;
-                document.getElementById('sfx-value').textContent = this.gameState.settings.sfxVolume + '%';
-                document.getElementById('text-speed').value = this.gameState.settings.textSpeed;
-                document.getElementById('flashlight-mode').checked = this.gameState.settings.flashlightMode;
-            }
-
-            applySettings() {
-                const flashlight = document.getElementById('flashlight');
-                if (flashlight) {
-                    flashlight.style.display = this.gameState.settings.flashlightMode ? 'block' : 'none';
-                }
-            }
-
-            saveGame() {
-                if (this.gameState.saveGame()) {
-                    this.showNotification('💾 Nightmare saved...');
-                }
-            }
-
-            deleteSaveData() {
-                if (confirm('Are you sure you want to erase all memories? This cannot be undone.')) {
-                    this.gameState.deleteSave();
-                    this.updateContinueButton();
-                    this.showNotification('Memories erased.');
-                }
-            }
-
-            updatePlayerStats() {
-                this.elements.health.textContent = this.gameState.player.health;
-                this.elements.sanity.textContent = this.gameState.player.sanity;
-                this.elements.level.textContent = this.gameState.player.level;
-                this.elements.locationName.textContent = this.gameState.player.location;
-
-                this.elements.healthBar.style.width = this.gameState.player.health + '%';
-                this.elements.sanityBar.style.width = this.gameState.player.sanity + '%';
-
-                if (this.gameState.player.health <= 30) {
-                    this.elements.healthBar.style.background = 'linear-gradient(90deg, #ff0000, #ff4444)';
-                    document.body.classList.add('heartbeat');
-                } else {
-                    this.elements.healthBar.style.background = 'linear-gradient(90deg, #8b0000, #ff0000)';
-                    document.body.classList.remove('heartbeat');
-                }
-
-                if (this.gameState.player.sanity <= 30) {
-                    this.elements.sanityBar.style.background = 'linear-gradient(90deg, #8000ff, #ff00ff)';
-                } else {
-                    this.elements.sanityBar.style.background = 'linear-gradient(90deg, #4a0080, #8000ff)';
-                }
-
-                this.elements.inventoryList.innerHTML = '';
-                if (this.gameState.player.inventory.length === 0) {
-                    this.elements.inventoryList.innerHTML = '<li>Empty</li>';
-                } else {
-                    this.gameState.player.inventory.forEach(item => {
-                        const li = document.createElement('li');
-                        li.textContent = '• ' + item;
-                        this.elements.inventoryList.appendChild(li);
-                    });
-                }
-            }
-
-            showGameText(storyNode) {
-                const textElement = this.elements.gameText;
-                const choicesElement = this.elements.gameChoices;
-
-                textElement.textContent = '';
-                choicesElement.innerHTML = '';
-
-                const speed = this.gameState.settings.textSpeed;
-                const delay = speed === 'fast' ? 10 : speed === 'slow' ? 40 : 25;
-
-                let i = 0;
-                const typeWriter = () => {
-                    if (i < storyNode.text.length) {
-                        textElement.textContent += storyNode.text.charAt(i);
-                        i++;
-                        textElement.scrollTop = textElement.scrollHeight;
-                        setTimeout(typeWriter, delay);
-                    } else {
-                        storyNode.choices.forEach((choice, index) => {
-                            const button = document.createElement('button');
-                            button.className = 'choice-btn';
-                            button.textContent = (index + 1) + '. ' + choice.text;
-                            button.addEventListener('click', () => this.makeChoice(choice));
-                            choicesElement.appendChild(button);
-                        });
-                    }
-                };
-
-                typeWriter();
-
-                if (storyNode.horror) {
-                    this.triggerHorrorEffect();
-                }
-            }
-
-            triggerHorrorEffect() {
-                const effects = ['screen-shake', 'heartbeat'];
-                const effect = effects[Math.floor(Math.random() * effects.length)];
-                document.body.classList.add(effect);
-
-                setTimeout(() => {
-                    document.body.classList.remove(effect);
-                }, 500);
-
-                if (Math.random() > 0.7 && this.horrorEngine) {
-                    this.horrorEngine.ghostLight.intensity = 2;
-                    setTimeout(() => {
-                        if (this.horrorEngine) {
-                            this.horrorEngine.ghostLight.intensity = 0.5;
-                        }
-                    }, 200);
-                }
-            }
-
-            makeChoice(choice) {
-                this.gameState.gameProgress.decisions.push({
-                    chapter: this.gameState.gameProgress.currentChapter,
-                    choice: choice.text
-                });
-
-                this.handleSpecialEvents(choice);
-
-                if (choice.next === 'menu') {
-                    if (this.horrorEngine) {
-                        this.horrorEngine.dispose();
-                        this.horrorEngine = null;
-                    }
-                    this.showScreen('main-menu');
-                    return;
-                }
-
-                if (gameStory[choice.next]) {
-                    this.gameState.gameProgress.currentChapter = choice.next;
-                    this.showGameText(gameStory[choice.next]);
-                } else {
-                    const fallbackText = {
-                        text: "You continue your journey through the Darkwood Forest. The path ahead is still shrouded in mystery...\n\n(More nightmares coming soon!)",
-                        choices: [
-                            { text: "Continue exploring", next: 'start' }
-                        ]
-                    };
-                    this.showGameText(fallbackText);
-                }
-
-                this.updatePlayerStats();
-                this.autoSave();
-            }
-
-            handleSpecialEvents(choice) {
-                const next = choice.next;
-                const node = gameStory[next];
-
-                if (node) {
-                    if (node.healthDamage) {
-                        this.gameState.player.health = Math.max(0, this.gameState.player.health - node.healthDamage);
-                    }
-                    if (node.sanityDamage) {
-                        this.gameState.player.sanity = Math.max(0, this.gameState.player.sanity - node.sanityDamage);
-                    }
-                    if (node.healthBonus) {
-                        this.gameState.player.health = Math.min(100, this.gameState.player.health + node.healthBonus);
-                    }
-                    if (node.sanityBonus) {
-                        this.gameState.player.sanity = Math.min(100, this.gameState.player.sanity + node.sanityBonus);
-                    }
-                }
-
-                if (next === 'searchArea') {
-                    this.addToInventory(['Rusty Dagger', 'Mysterious Parchment', '3 Gold Coins', 'Healing Potion']);
-                } else if (next === 'openChestWithKey') {
-                    this.addToInventory(['Silver Amulet', 'Healing Potion']);
-                } else if (next === 'findKey') {
-                    this.addToInventory(['Rusty Iron Key']);
-                } else if (next === 'searchSupplies') {
-                    this.addToInventory(['Dried Meat', 'Water Flask', 'Bandages']);
-                } else if (next === 'collectHerbs') {
-                    this.addToInventory(['Whispering Herbs']);
-                } else if (next === 'drinkVial') {
-                    this.addToInventory(['Second Sight']);
-                }
-            }
-
-            addToInventory(items) {
-                items.forEach(item => {
-                    if (!this.gameState.player.inventory.includes(item)) {
-                        this.gameState.player.inventory.push(item);
-                    }
-                });
-            }
-
-            autoSave() {
-                this.gameState.saveGame();
-                this.updateContinueButton();
-            }
-
-            handlePlayerInput() {
-                const input = document.getElementById('player-input');
-                const command = input.value.trim().toLowerCase();
-                input.value = '';
-
-                if (command) {
-                    this.processCommand(command);
-                }
-            }
-
-            processCommand(command) {
-                const textElement = this.elements.gameText;
-
-                if (command.includes('look') || command.includes('examine')) {
-                    textElement.textContent += '\n\n> You look around carefully, taking in your surroundings. The darkness seems to watch back.';
-                } else if (command.includes('inventory') || command.includes('bag')) {
-                    const inv = this.gameState.player.inventory;
-                    textElement.textContent += '\n\n> Inventory: ' + (inv.length > 0 ? inv.join(', ') : 'Empty');
-                } else if (command.includes('health') || command.includes('hp')) {
-                    textElement.textContent += '\n\n> Health: ' + this.gameState.player.health + '/100';
-                } else if (command.includes('sanity')) {
-                    textElement.textContent += '\n\n> Sanity: ' + this.gameState.player.sanity + '/100';
-                } else if (command.includes('help')) {
-                    textElement.textContent += '\n\n> Available commands: look, inventory, health, sanity, help, save, load';
-                } else if (command.includes('save')) {
-                    this.saveGame();
-                    textElement.textContent += '\n\n> Nightmare saved...';
-                } else if (command.includes('load')) {
-                    if (this.gameState.hasSaveData()) {
-                        this.continueGame();
-                    } else {
-                        textElement.textContent += '\n\n> No memories found.';
-                    }
-                } else {
-                    textElement.textContent += '\n\n> "' + command + '" - Nothing happens. Type "help" for available commands.';
-                }
-
-                textElement.scrollTop = textElement.scrollHeight;
-            }
-
-            showNotification(message) {
-                document.querySelectorAll('.notification').forEach(n => n.remove());
-
-                const notification = document.createElement('div');
-                notification.className = 'notification';
-                notification.textContent = message;
-                document.body.appendChild(notification);
-
-                setTimeout(() => {
-                    notification.style.animation = 'slideOut 0.3s ease';
-                    setTimeout(() => notification.remove(), 300);
-                }, 2000);
-            }
+  moveToward(target, speed, dt, walls) {
+    const dir = new THREE.Vector3().subVectors(target, this.position);
+    dir.y = 0;
+    const dist = dir.length();
+    if (dist > 0.1) {
+      dir.normalize();
+      const move = dir.multiplyScalar(speed * dt);
+      // Simple collision: try move, if wall hit, don't move
+      const newPos = this.position.clone().add(move);
+      if (!this.checkWallCollision(newPos, walls)) {
+        this.position.copy(newPos);
+      } else {
+        // Slide along wall
+        const moveX = new THREE.Vector3(move.x, 0, 0);
+        const testX = this.position.clone().add(moveX);
+        if (!this.checkWallCollision(testX, walls)) this.position.copy(testX);
+        else {
+          const moveZ = new THREE.Vector3(0, 0, move.z);
+          const testZ = this.position.clone().add(moveZ);
+          if (!this.checkWallCollision(testZ, walls)) this.position.copy(testZ);
         }
+      }
+    }
+  }
 
-        // ============ INITIALIZE ============
-        const gameState = new GameState();
-        const uiManager = new UIManager(gameState);
+  checkWallCollision(pos, walls) {
+    const myBox = new THREE.Box3(
+      new THREE.Vector3(pos.x - 0.5, pos.y, pos.z - 0.5),
+      new THREE.Vector3(pos.x + 0.5, pos.y + 2, pos.z + 0.5)
+    );
+    for (const w of walls) {
+      if (w.bbox && myBox.intersectsBox(w.bbox)) return true;
+    }
+    return false;
+  }
 
-        console.log('Darkwood Chronicles - 3D Horror Experience');
-        console.log('Ready to enter the darkness...');
-    </script>
+  hasLineOfSight(targetPos, walls) {
+    // Simple ray check - just distance for now, with height check
+    const dist = this.position.distanceTo(targetPos);
+    if (dist > this.detectionRange) return false;
+    // Check if player is in front (dot product)
+    const dirToPlayer = new THREE.Vector3().subVectors(targetPos, this.position).normalize();
+    const facing = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), this.mesh ? this.mesh.rotation.y : 0);
+    const dot = facing.dot(dirToPlayer);
+    // 180 degree vision for stalker, 270 for others
+    const fov = this.type === 'stalker' ? -0.5 : -0.8;
+    if (dot < fov) return false; // behind monster
+    return true;
+  }
+
+  takeDamage(amount) {
+    // Some monsters can't be killed
+    if (this.type === 'watcher') return false;
+    // For now monsters are unkillable (it's horror!)
+    return false;
+  }
+}
+
+// ============ PLAYER CONTROLLER ============
+class PlayerController {
+  constructor(camera, input, audio) {
+    this.camera = camera;
+    this.input = input;
+    this.audio = audio;
+    this.position = new THREE.Vector3(0, 1.7, 10);
+    this.velocity = new THREE.Vector3();
+    this.rotation = new THREE.Euler(0, 0, 0, 'YXZ');
+    this.height = 1.7;
+    this.crouchHeight = 0.9;
+    this.currentHeight = this.height;
+    this.speed = 4;
+    this.runSpeed = 7;
+    this.crouchSpeed = 1.5;
+    this.currentSpeed = this.speed;
+    this.stamina = 100;
+    this.maxStamina = 100;
+    this.staminaRegen = 20;
+    this.staminaDrain = 30;
+    this.health = 100;
+    this.maxHealth = 100;
+    this.sanity = 100;
+    this.maxSanity = 100;
+    this.flashlight = {
+      on: true,
+      battery: 100,
+      drainRate: 5,
+      light: null
+    };
+    this.inventory = [];
+    this.keys = [];
+    this.isCrouching = false;
+    this.isRunning = false;
+    this.onGround = true;
+    this.gravity = -18;
+    this.jumpForce = 6;
+    this.verticalVelocity = 0;
+    this.interactionRange = 3;
+    this.currentZone = 'forest';
+    this.invulnerable = 0;
+    this.bobPhase = 0;
+    this.breathPhase = 0;
+  }
+
+  initFlashlight(scene) {
+    this.flashlight.light = new THREE.SpotLight(0xffffee, 1.5, 25, Math.PI / 5, 0.5, 1);
+    this.flashlight.light.position.set(0, 0, 0);
+    this.flashlight.light.castShadow = true;
+    this.flashlight.light.shadow.mapSize.width = 512;
+    this.flashlight.light.shadow.mapSize.height = 512;
+    this.camera.add(this.flashlight.light);
+    this.flashlight.light.target.position.set(0, 0, -10);
+    this.camera.add(this.flashlight.light.target);
+  }
+
+  update(dt, walls, floors, doors, items, monsters) {
+    this.handleMouseLook(dt);
+    this.handleMovement(dt, walls, floors);
+    this.handleActions(dt, doors, items, monsters);
+    this.updateStats(dt);
+    this.updateCameraEffects(dt);
+    this.checkMonsterCollisions(monsters);
+    this.checkZone(walls);
+  }
+
+  handleMouseLook(dt) {
+    const mouse = this.input.getMouseDelta();
+    this.rotation.y -= mouse.dx;
+    this.rotation.x -= mouse.dy;
+    this.rotation.x = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, this.rotation.x));
+    this.camera.rotation.copy(this.rotation);
+  }
+
+  handleMovement(dt, walls, floors) {
+    const forward = this.input.isPressed('KeyW') || this.input.isPressed('ArrowUp');
+    const backward = this.input.isPressed('KeyS') || this.input.isPressed('ArrowDown');
+    const left = this.input.isPressed('KeyA') || this.input.isPressed('ArrowLeft');
+    const right = this.input.isPressed('KeyD') || this.input.isPressed('ArrowRight');
+    const run = this.input.isPressed('ShiftLeft') || this.input.isPressed('ShiftRight');
+    const crouch = this.input.isPressed('ControlLeft') || this.input.isPressed('KeyC');
+    const jump = this.input.isPressed('Space');
+
+    // Crouch
+    this.isCrouching = crouch;
+    const targetHeight = this.isCrouching ? this.crouchHeight : this.height;
+    this.currentHeight += (targetHeight - this.currentHeight) * 5 * dt;
+
+    // Run
+    this.isRunning = run && forward && this.stamina > 0 && !this.isCrouching;
+    if (this.isRunning) {
+      this.currentSpeed = this.runSpeed;
+      this.stamina -= this.staminaDrain * dt;
+    } else {
+      this.currentSpeed = this.isCrouching ? this.crouchSpeed : this.speed;
+      this.stamina = Math.min(this.maxStamina, this.stamina + this.staminaRegen * dt);
+    }
+
+    // Movement direction
+    const moveDir = new THREE.Vector3();
+    if (forward) moveDir.z -= 1;
+    if (backward) moveDir.z += 1;
+    if (left) moveDir.x -= 1;
+    if (right) moveDir.x += 1;
+
+    if (moveDir.length() > 0) {
+      moveDir.normalize();
+      // Rotate by camera yaw
+      moveDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.rotation.y);
+
+      // Try move X
+      const newPosX = this.position.clone();
+      newPosX.x += moveDir.x * this.currentSpeed * dt;
+      if (!this.checkCollision(newPosX, walls)) {
+        this.position.x = newPosX.x;
+      }
+
+      // Try move Z
+      const newPosZ = this.position.clone();
+      newPosZ.z += moveDir.z * this.currentSpeed * dt;
+      if (!this.checkCollision(newPosZ, walls)) {
+        this.position.z = newPosZ.z;
+      }
+
+      // Footsteps
+      this.bobPhase += dt * (this.isRunning ? 15 : 8);
+      if (Math.sin(this.bobPhase) > 0.95 && Math.sin(this.bobPhase - 0.1) <= 0.95) {
+        this.audio.playFootstep(this.isRunning, this.isCrouching);
+      }
+    }
+
+    // Gravity / Jump
+    if (jump && this.onGround) {
+      this.verticalVelocity = this.jumpForce;
+      this.onGround = false;
+    }
+
+    this.verticalVelocity += this.gravity * dt;
+    this.position.y += this.verticalVelocity * dt;
+
+    // Floor collision
+    let floorY = -100;
+    for (const f of floors) {
+      if (f.bbox && this.position.x >= f.bbox.min.x && this.position.x <= f.bbox.max.x &&
+          this.position.z >= f.bbox.min.z && this.position.z <= f.bbox.max.z) {
+        floorY = Math.max(floorY, f.bbox.max.y);
+      }
+    }
+
+    if (this.position.y <= floorY + this.currentHeight) {
+      this.position.y = floorY + this.currentHeight;
+      this.verticalVelocity = 0;
+      this.onGround = true;
+    }
+
+    // Update camera
+    this.camera.position.copy(this.position);
+    this.camera.position.y = this.position.y + Math.sin(this.bobPhase) * 0.05;
+
+    // Flashlight toggle
+    if (this.input.isPressed('KeyF')) {
+      this.flashlight.on = !this.flashlight.on;
+      this.flashlight.light.intensity = this.flashlight.on ? 1.5 : 0;
+      // Prevent key repeat
+      this.input.keys['KeyF'] = false;
+    }
+  }
+
+  checkCollision(pos, walls) {
+    const playerBox = new THREE.Box3(
+      new THREE.Vector3(pos.x - 0.3, pos.y, pos.z - 0.3),
+      new THREE.Vector3(pos.x + 0.3, pos.y + this.currentHeight, pos.z + 0.3)
+    );
+    for (const w of walls) {
+      if (w.bbox && w.type !== 'tree' && w.type !== 'rock' && playerBox.intersectsBox(w.bbox)) {
+        return true;
+      }
+    }
+    // Tree/rock collision (cylinder approx)
+    for (const w of walls) {
+      if ((w.type === 'tree' || w.type === 'rock') && w.bbox) {
+        const dx = pos.x - w.x;
+        const dz = pos.z - w.z;
+        const dist = Math.sqrt(dx*dx + dz*dz);
+        if (dist < (w.w/2 + 0.3)) return true;
+      }
+    }
+    return false;
+  }
+
+  handleActions(dt, doors, items, monsters) {
+    // Interaction
+    if (this.input.isPressed('KeyE')) {
+      this.tryInteract(doors, items);
+      this.input.keys['KeyE'] = false;
+    }
+
+    // Update flashlight battery
+    if (this.flashlight.on) {
+      this.flashlight.battery -= this.flashlight.drainRate * dt;
+      if (this.flashlight.battery <= 0) {
+        this.flashlight.battery = 0;
+        this.flashlight.on = false;
+        this.flashlight.light.intensity = 0;
+      }
+    }
+
+    // Show interaction prompt
+    const prompt = document.getElementById('interaction-prompt');
+    let nearest = null;
+    let nearestDist = Infinity;
+
+    for (const d of doors) {
+      const dist = Math.sqrt((this.position.x - d.x)**2 + (this.position.z - d.z)**2);
+      if (dist < this.interactionRange && dist < nearestDist) {
+        nearest = d;
+        nearestDist = dist;
+      }
+    }
+    for (const i of items) {
+      if (i.pickedUp) continue;
+      const dist = Math.sqrt((this.position.x - i.x)**2 + (this.position.z - i.z)**2);
+      if (dist < this.interactionRange && dist < nearestDist) {
+        nearest = i;
+        nearestDist = dist;
+      }
+    }
+
+    if (nearest) {
+      let text = '';
+      if (nearest.name) {
+        text = '[E] ' + nearest.name;
+        if (nearest.locked) text += ' (LOCKED)';
+      }
+      prompt.textContent = text;
+      prompt.style.opacity = '1';
+    } else {
+      prompt.style.opacity = '0';
+    }
+  }
+
+  tryInteract(doors, items) {
+    // Check doors
+    for (const d of doors) {
+      const dist = Math.sqrt((this.position.x - d.x)**2 + (this.position.z - d.z)**2);
+      if (dist < this.interactionRange) {
+        if (d.locked) {
+          if (this.keys.includes(d.key)) {
+            d.locked = false;
+            this.audio.playDoorCreak();
+            this.audio.speak('The door is unlocked.', true);
+          } else {
+            this.audio.speak('Locked. I need a key.', true);
+            this.audio.playTone(150, 0.3, 'square', 0.15);
+          }
+        } else {
+          d.open = !d.open;
+          this.audio.playDoorCreak();
+          if (d.targetZone) {
+            this.currentZone = d.targetZone;
+            this.audio.speak('Entering ' + d.targetZone.replace('_', ' '), false);
+          }
+        }
+        return;
+      }
+    }
+
+    // Check items
+    for (const i of items) {
+      if (i.pickedUp) continue;
+      const dist = Math.sqrt((this.position.x - i.x)**2 + (this.position.z - i.z)**2);
+      if (dist < this.interactionRange) {
+        i.pickedUp = true;
+        if (i.type === 'key') {
+          this.keys.push(i.keyType);
+          this.audio.speak('Found a key.', true);
+        } else if (i.type === 'amulet') {
+          this.inventory.push('Amulet of Shadows');
+          this.audio.speak('The amulet... it burns cold.', true);
+        } else if (i.type === 'health') {
+          this.health = Math.min(this.maxHealth, this.health + 40);
+          this.audio.speak('Health restored.', true);
+        } else if (i.type === 'note') {
+          this.inventory.push('Bloody Note');
+          this.audio.speak('A note... written in blood.', true);
+        }
+        // Hide mesh
+        if (i.mesh) {
+          i.mesh.visible = false;
+        }
+        this.updateInventoryUI();
+        return;
+      }
+    }
+  }
+
+  checkMonsterCollisions(monsters) {
+    if (this.invulnerable > 0) {
+      this.invulnerable -= 0.016;
+      return;
+    }
+
+    for (const m of monsters) {
+      if (m.state === 'dead') continue;
+      const dist = this.position.distanceTo(m.position);
+      if (dist < 1.5) {
+        // Take damage
+        this.health -= m.damage;
+        this.invulnerable = 1.5;
+        this.sanity -= 10;
+
+        // Knockback
+        const knockDir = new THREE.Vector3().subVectors(this.position, m.position).normalize();
+        this.position.add(knockDir.multiplyScalar(2));
+
+        // Screen effects
+        const dmgOverlay = document.getElementById('damage-overlay');
+        dmgOverlay.style.opacity = '0.8';
+        setTimeout(() => { dmgOverlay.style.opacity = '0'; }, 300);
+
+        document.body.classList.add('shake');
+        setTimeout(() => document.body.classList.remove('shake'), 500);
+
+        this.audio.playScream();
+        this.audio.speak('It got me!', true);
+
+        // Check death
+        if (this.health <= 0) {
+          this.die(m.type);
+        }
+        break;
+      }
+    }
+  }
+
+  checkZone(walls) {
+    // Simple zone detection based on position
+    const x = this.position.x;
+    const z = this.position.z;
+
+    if (x < -15 && x > -25 && z < -15 && z > -25) {
+      this.currentZone = 'cabin_exterior';
+    } else if (x < -15 && x > -25 && z < -17 && z > -23 && this.position.y > 0.5) {
+      this.currentZone = 'cabin_main';
+    } else if (this.position.y < -2) {
+      this.currentZone = 'basement';
+    } else if (this.position.y < -4) {
+      this.currentZone = 'cave';
+    }
+  }
+
+  updateStats(dt) {
+    // Sanity drain in dark / near monsters
+    let sanityDrain = 0;
+    if (!this.flashlight.on) sanityDrain += 2;
+    if (this.currentZone === 'basement' || this.currentZone === 'cave') sanityDrain += 3;
+
+    this.sanity -= sanityDrain * dt;
+    this.sanity = Math.max(0, Math.min(this.maxSanity, this.sanity));
+
+    // Low sanity effects
+    if (this.sanity < 30) {
+      document.body.classList.add('sanity-low');
+      if (Math.random() < 0.005) {
+        this.audio.playWhisper();
+      }
+    } else {
+      document.body.classList.remove('sanity-low');
+    }
+
+    // Update UI
+    document.getElementById('health-fill').style.width = (this.health / this.maxHealth * 100) + '%';
+    document.getElementById('sanity-fill').style.width = (this.sanity / this.maxSanity * 100) + '%';
+    document.getElementById('stamina-fill').style.width = (this.stamina / this.maxStamina * 100) + '%';
+    document.getElementById('battery-fill').style.width = (this.flashlight.battery / 100 * 100) + '%';
+    document.getElementById('health').textContent = Math.ceil(this.health);
+    document.getElementById('sanity').textContent = Math.ceil(this.sanity);
+
+    // Battery warning
+    const battOuter = document.getElementById('battery-outer');
+    if (this.flashlight.battery < 20) {
+      battOuter.classList.add('battery-low');
+    } else {
+      battOuter.classList.remove('battery-low');
+    }
+
+    // Objective
+    const obj = document.getElementById('objective');
+    if (this.keys.includes('cabin_key') && !this.keys.includes('basement_key')) {
+      obj.textContent = 'ENTER THE CABIN';
+    } else if (this.keys.includes('basement_key') && this.inventory.indexOf('Amulet of Shadows') === -1) {
+      obj.textContent = 'FIND THE AMULET';
+    } else if (this.inventory.indexOf('Amulet of Shadows') >= 0) {
+      obj.textContent = 'ESCAPE THE DARKWOOD';
+    }
+  }
+
+  updateCameraEffects(dt) {
+    // Breath fog at low stamina
+    if (this.stamina < 20) {
+      this.breathPhase += dt * 2;
+    }
+  }
+
+  updateInventoryUI() {
+    const container = document.getElementById('quick-inventory');
+    container.innerHTML = '';
+    this.inventory.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'inv-item';
+      div.textContent = item;
+      container.appendChild(div);
+    });
+    this.keys.forEach(key => {
+      const div = document.createElement('div');
+      div.className = 'inv-item';
+      div.textContent = 'KEY: ' + key;
+      div.style.borderColor = '#8b0000';
+      container.appendChild(div);
+    });
+  }
+
+  die(cause) {
+    const screen = document.getElementById('gameover-screen');
+    const reason = document.getElementById('gameover-reason');
+    const audio = this.audio;
+
+    audio.playScream();
+    audio.stopAmbientDrone();
+    audio.stopHeartbeat();
+
+    const reasons = {
+      stalker: 'The Stalker dragged you into the trees.',
+      crawler: 'The Crawler fed on your screams.',
+      watcher: 'The Watcher consumed your soul.',
+      default: 'The forest has claimed you.'
+    };
+    reason.textContent = reasons[cause] || reasons.default;
+
+    // Death camera animation
+    screen.style.display = 'flex';
+    document.exitPointerLock();
+  }
+}
+
+// ============ GAME ENGINE ============
+class GameEngine {
+  constructor() {
+    this.canvas = document.getElementById('game-canvas');
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 0.4;
+
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x020202);
+    this.scene.fog = new THREE.FogExp2(0x020202, 0.04);
+
+    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+    this.camera.position.set(0, 1.7, 10);
+
+    this.input = new InputManager();
+    this.audio = new AudioManager();
+    this.jumpscare = new JumpScareManager(this.audio);
+    this.player = new PlayerController(this.camera, this.input, this.audio);
+
+    this.levelData = buildLevel();
+    this.walls = this.levelData.walls;
+    this.floors = this.levelData.floors;
+    this.doors = this.levelData.doors;
+    this.items = this.levelData.items;
+    this.monsters = [];
+
+    this.clock = new THREE.Clock();
+    this.isRunning = false;
+    this.isPaused = false;
+    this.timeInZone = 0;
+    this.ambientTimer = 0;
+    this.chaseMusicActive = false;
+
+    this.buildWorld();
+    this.setupLighting();
+    this.player.initFlashlight(this.scene);
+    this.spawnMonsters();
+    this.createItemMeshes();
+
+    window.addEventListener('resize', () => this.onResize());
+    document.addEventListener('pointerlockchange', () => {
+      this.input.mouse.locked = !!document.pointerLockElement;
+    });
+
+    // Loading
+    this.simulateLoading();
+  }
+
+  simulateLoading() {
+    const bar = document.getElementById('loading-fill');
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 15;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+        setTimeout(() => {
+          document.getElementById('loading').style.display = 'none';
+        }, 500);
+      }
+      bar.style.width = progress + '%';
+    }, 200);
+  }
+
+  buildWorld() {
+    // Materials
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x1a0a0a, roughness: 0.95 });
+    const cabinMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 0.9 });
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.95 });
+    const treeMat = new THREE.MeshStandardMaterial({ color: 0x0d0d0d, roughness: 0.95 });
+    const rockMat = new THREE.MeshStandardMaterial({ color: 0x111, roughness: 0.9 });
+    const basementMat = new THREE.MeshStandardMaterial({ color: 0x0a0505, roughness: 0.95 });
+    const caveMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.98 });
+
+    // Build walls
+    this.walls.forEach(w => {
+      let mat = wallMat;
+      if (w.type === 'cabin_wall' || w.type === 'interior_wall') mat = cabinMat;
+      if (w.type === 'basement_wall') mat = basementMat;
+      if (w.type === 'cave_wall' || w.type === 'pillar') mat = caveMat;
+      if (w.type === 'tree') mat = treeMat;
+      if (w.type === 'rock') mat = rockMat;
+
+      const geo = new THREE.BoxGeometry(w.w, w.h, w.d);
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(w.x, w.y + w.h/2, w.z);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      this.scene.add(mesh);
+    });
+
+    // Build floors
+    this.floors.forEach(f => {
+      const geo = new THREE.PlaneGeometry(f.w, f.d);
+      const mesh = new THREE.Mesh(geo, floorMat);
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.position.set(f.x, f.y, f.z);
+      mesh.receiveShadow = true;
+      this.scene.add(mesh);
+    });
+
+    // Build doors
+    this.doors.forEach(d => {
+      const geo = new THREE.BoxGeometry(d.w, d.h, d.d);
+      const mat = new THREE.MeshStandardMaterial({ color: 0x3a1a0a });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(d.x, d.y + d.h/2, d.z);
+      mesh.castShadow = true;
+      this.scene.add(mesh);
+      d.mesh = mesh;
+    });
+
+    // Trees (visual only - already have collision)
+    this.levelData.treePositions.forEach(([tx, tz]) => {
+      const trunkGeo = new THREE.CylinderGeometry(0.4, 0.5, 5 + Math.random()*3, 6);
+      const trunk = new THREE.Mesh(trunkGeo, treeMat);
+      trunk.position.set(tx, 2.5, tz);
+      trunk.castShadow = true;
+      this.scene.add(trunk);
+
+      // Canopy (dark)
+      const canopyGeo = new THREE.SphereGeometry(2 + Math.random(), 4, 4);
+      const canopyMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 1 });
+      const canopy = new THREE.Mesh(canopyGeo, canopyMat);
+      canopy.position.set(tx, 5 + Math.random(), tz);
+      canopy.scale.y = 0.6;
+      this.scene.add(canopy);
+    });
+
+    // Rocks
+    this.levelData.rockPositions.forEach(([rx, rz]) => {
+      const geo = new THREE.DodecahedronGeometry(0.8 + Math.random()*0.5, 0);
+      const mesh = new THREE.Mesh(geo, rockMat);
+      mesh.position.set(rx, 0.4, rz);
+      mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+      mesh.castShadow = true;
+      this.scene.add(mesh);
+    });
+
+    // Cabin roof
+    const roofGeo = new THREE.ConeGeometry(6, 3, 4);
+    const roofMat = new THREE.MeshStandardMaterial({ color: 0x1a0a0a });
+    const roof = new THREE.Mesh(roofGeo, roofMat);
+    roof.position.set(-20, 5.5, -20);
+    roof.rotation.y = Math.PI / 4;
+    this.scene.add(roof);
+
+    // Cabin windows (glow)
+    const winGeo = new THREE.PlaneGeometry(0.8, 0.8);
+    const winMat = new THREE.MeshBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.2 });
+    const win1 = new THREE.Mesh(winGeo, winMat);
+    win1.position.set(-17, 2.5, -16);
+    this.scene.add(win1);
+
+    // Dead trees
+    for (let i = 0; i < 10; i++) {
+      const h = 3 + Math.random() * 3;
+      const geo = new THREE.CylinderGeometry(0.08, 0.2, h, 4);
+      const mesh = new THREE.Mesh(geo, treeMat);
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 8 + Math.random() * 20;
+      mesh.position.set(Math.cos(angle)*dist, h/2, Math.sin(angle)*dist);
+      mesh.rotation.z = (Math.random()-0.5)*0.3;
+      this.scene.add(mesh);
+    }
+
+    // Particles (mist)
+    this.createMist();
+
+    // Blood decals (scattered)
+    for (let i = 0; i < 8; i++) {
+      const geo = new THREE.CircleGeometry(0.3 + Math.random()*0.5, 6);
+      const mat = new THREE.MeshBasicMaterial({ color: 0x440000, transparent: true, opacity: 0.6 });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.rotation.x = -Math.PI/2;
+      mesh.position.set((Math.random()-0.5)*50, 0.02, (Math.random()-0.5)*50);
+      this.scene.add(mesh);
+    }
+  }
+
+  createMist() {
+    const count = 300;
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      pos[i*3] = (Math.random()-0.5)*60;
+      pos[i*3+1] = Math.random()*3;
+      pos[i*3+2] = (Math.random()-0.5)*60;
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const mat = new THREE.PointsMaterial({
+      color: 0x444466, size: 0.08, transparent: true, opacity: 0.3
+    });
+    this.mist = new THREE.Points(geo, mat);
+    this.scene.add(this.mist);
+  }
+
+  createItemMeshes() {
+    this.items.forEach(item => {
+      let geo, mat;
+      if (item.type === 'key') {
+        geo = new THREE.TorusGeometry(0.15, 0.04, 8, 16);
+        mat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 0.8, roughness: 0.3 });
+      } else if (item.type === 'amulet') {
+        geo = new THREE.OctahedronGeometry(0.2, 0);
+        mat = new THREE.MeshStandardMaterial({ color: 0x6600ff, emissive: 0x220044, emissiveIntensity: 0.5 });
+      } else if (item.type === 'health') {
+        geo = new THREE.CylinderGeometry(0.1, 0.1, 0.3, 8);
+        mat = new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x004400, transparent: true, opacity: 0.8 });
+      } else {
+        geo = new THREE.BoxGeometry(0.2, 0.3, 0.02);
+        mat = new THREE.MeshStandardMaterial({ color: 0xaa0000 });
+      }
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(item.x, item.y, item.z);
+      this.scene.add(mesh);
+      item.mesh = mesh;
+
+      // Glow light
+      if (item.glow) {
+        const light = new THREE.PointLight(item.glow, 0.5, 3);
+        light.position.copy(mesh.position);
+        this.scene.add(light);
+        item.light = light;
+      }
+    });
+  }
+
+  setupLighting() {
+    // Moonlight
+    const moon = new THREE.DirectionalLight(0x334466, 0.3);
+    moon.position.set(20, 30, -10);
+    moon.castShadow = true;
+    moon.shadow.camera.left = -30;
+    moon.shadow.camera.right = 30;
+    moon.shadow.camera.top = 30;
+    moon.shadow.camera.bottom = -30;
+    moon.shadow.mapSize.width = 2048;
+    moon.shadow.mapSize.height = 2048;
+    this.scene.add(moon);
+
+    // Ambient
+    const ambient = new THREE.AmbientLight(0x110505, 0.15);
+    this.scene.add(ambient);
+
+    // Cabin fire light
+    const fire = new THREE.PointLight(0xff4400, 1, 15);
+    fire.position.set(-20, 1, -20);
+    fire.castShadow = true;
+    this.scene.add(fire);
+    this.fireLight = fire;
+
+    // Basement red light
+    const red = new THREE.PointLight(0xff0000, 0.3, 10);
+    red.position.set(-20, -2, -5);
+    this.scene.add(red);
+  }
+
+  spawnMonsters() {
+    // Stalkers in forest
+    this.monsters.push(new Monster('stalker', { x: -10, y: 0, z: -10 }, this.scene));
+    this.monsters.push(new Monster('stalker', { x: 15, y: 0, z: -15 }, this.scene));
+    this.monsters.push(new Monster('stalker', { x: -5, y: 0, z: 20 }, this.scene));
+
+    // Crawlers in cabin/basement
+    this.monsters.push(new Monster('crawler', { x: -20, y: 0.3, z: -20 }, this.scene));
+    this.monsters.push(new Monster('crawler', { x: -20, y: -3, z: -5 }, this.scene));
+
+    // Watcher in cave
+    this.monsters.push(new Monster('watcher', { x: 5, y: -4, z: 10 }, this.scene));
+  }
+
+  start() {
+    this.isRunning = true;
+    this.audio.startAmbientDrone();
+    this.audio.speak('The forest knows you are here.', true);
+    this.animate();
+  }
+
+  animate() {
+    if (!this.isRunning) return;
+    requestAnimationFrame(() => this.animate());
+
+    const dt = Math.min(this.clock.getDelta(), 0.1);
+    if (this.isPaused) return;
+
+    // Update player
+    this.player.update(dt, this.walls, this.floors, this.doors, this.items, this.monsters);
+
+    // Update monsters
+    let chasing = false;
+    this.monsters.forEach(m => {
+      const result = m.update(dt, this.player, this.walls);
+      if (result === 'jumpscare') {
+        const dmg = this.jumpscare.trigger('monster', 1.5);
+        this.player.sanity -= dmg;
+      }
+      if (result === 'attack') {
+        // Monster attacks from range
+        this.player.health -= m.damage * 0.5;
+        this.player.sanity -= 15;
+        const dmgOverlay = document.getElementById('damage-overlay');
+        dmgOverlay.style.opacity = '0.6';
+        setTimeout(() => { dmgOverlay.style.opacity = '0'; }, 200);
+        this.audio.playMonsterGrowl(0);
+      }
+      if (m.state === 'chase' || m.state === 'attack') chasing = true;
+    });
+
+    // Chase music
+    if (chasing && !this.chaseMusicActive) {
+      this.chaseMusicActive = true;
+      this.audio.startHeartbeat(2);
+    } else if (!chasing && this.chaseMusicActive) {
+      this.chaseMusicActive = false;
+      this.audio.stopHeartbeat();
+    }
+
+    // Update mist
+    if (this.mist) {
+      const positions = this.mist.geometry.attributes.position.array;
+      for (let i = 0; i < positions.length; i += 3) {
+        positions[i+1] += Math.sin(Date.now()*0.001 + positions[i])*0.001;
+        if (positions[i+1] > 3) positions[i+1] = 0;
+      }
+      this.mist.geometry.attributes.position.needsUpdate = true;
+    }
+
+    // Flicker fire
+    if (this.fireLight) {
+      this.fireLight.intensity = 0.8 + Math.sin(Date.now()*0.01)*0.2 + Math.random()*0.3;
+    }
+
+    // Item glow animation
+    this.items.forEach(item => {
+      if (item.mesh && !item.pickedUp) {
+        item.mesh.rotation.y += dt;
+        item.mesh.position.y = item.y + Math.sin(Date.now()*0.003)*0.1;
+        if (item.light) {
+          item.light.intensity = 0.3 + Math.sin(Date.now()*0.005)*0.2;
+        }
+      }
+    });
+
+    // Ambient events
+    this.ambientTimer += dt;
+    if (this.ambientTimer > 15 + Math.random()*20) {
+      this.ambientTimer = 0;
+      this.triggerAmbientEvent();
+    }
+
+    // Jump scare manager
+    this.jumpscare.update(dt);
+
+    // Render
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  triggerAmbientEvent() {
+    const events = [
+      () => {
+        this.audio.playWhisper();
+        this.audio.speak('Behind you...', false);
+      },
+      () => {
+        this.jumpscare.triggerAmbient();
+        this.player.sanity -= 5;
+      },
+      () => {
+        // Shadow passes by
+        const shadowGeo = new THREE.PlaneGeometry(3, 6);
+        const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000, transparent: true, opacity: 0.7, side: THREE.DoubleSide });
+        const shadow = new THREE.Mesh(shadowGeo, shadowMat);
+        shadow.position.set(this.player.position.x + 5, 3, this.player.position.z);
+        shadow.lookAt(this.player.position);
+        this.scene.add(shadow);
+        setTimeout(() => this.scene.remove(shadow), 500);
+        this.audio.playNoise(0.5, 0.1);
+        this.player.sanity -= 8;
+      },
+      () => {
+        this.audio.playMonsterGrowl(10);
+        this.audio.speak('It is getting closer.', false);
+      },
+      () => {
+        // Footsteps behind
+        this.audio.playFootstep(false, false);
+        setTimeout(() => this.audio.playFootstep(false, false), 400);
+        setTimeout(() => this.audio.playFootstep(false, false), 800);
+      }
+    ];
+    const event = events[Math.floor(Math.random() * events.length)];
+    event();
+  }
+
+  onResize() {
+    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  pause() {
+    this.isPaused = true;
+    document.exitPointerLock();
+  }
+
+  resume() {
+    this.isPaused = false;
+    this.input.lockPointer();
+  }
+}
+
+// ============ GAME FLOW ============
+let game = null;
+
+function startGame() {
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('gameover-screen').style.display = 'none';
+  if (game) {
+    // Reset
+    location.reload();
+    return;
+  }
+  game = new GameEngine();
+  setTimeout(() => game.start(), 100);
+}
+
+function continueGame() {
+  // Check for save
+  const save = localStorage.getItem('darkwood-fps-save');
+  if (save) {
+    startGame();
+    // Would restore state here
+  } else {
+    alert('No save data found.');
+  }
+}
+
+// Button handlers
+document.getElementById('btn-start').addEventListener('click', startGame);
+document.getElementById('btn-continue').addEventListener('click', continueGame);
+document.getElementById('btn-settings').addEventListener('click', () => {
+  document.getElementById('settings-panel').style.display = 'block';
+});
+document.getElementById('btn-close-settings').addEventListener('click', () => {
+  document.getElementById('settings-panel').style.display = 'none';
+});
+document.getElementById('btn-retry').addEventListener('click', () => {
+  location.reload();
+});
+document.getElementById('btn-menu').addEventListener('click', () => {
+  location.reload();
+});
+
+// Settings
+document.getElementById('sens-slider').addEventListener('input', (e) => {
+  if (game) game.input.setSensitivity(parseInt(e.target.value));
+});
+document.getElementById('vol-slider').addEventListener('input', (e) => {
+  if (game) game.audio.setMasterVolume(parseInt(e.target.value));
+});
+document.getElementById('voice-slider').addEventListener('input', (e) => {
+  if (game) game.audio.voiceVolume = parseInt(e.target.value) / 100;
+});
+document.getElementById('jumpscare-slider').addEventListener('input', (e) => {
+  if (game) game.jumpscare.intensity = parseInt(e.target.value) / 100;
+});
+
+// Disable continue if no save
+if (!localStorage.getItem('darkwood-fps-save')) {
+  document.getElementById('btn-continue').disabled = true;
+}
+
+console.log('DARKWOOD FPS HORROR - Engine loaded');
+console.log('Controls: WASD = Move, Shift = Run, Ctrl/C = Crouch, Space = Jump, F = Flashlight, E = Interact, Mouse = Look');
+</script>
 </body>
 </html>
